@@ -1,0 +1,18 @@
+# Environment variables - never commit these
+.env
+.env.local
+.env.*.local
+/backend.env
+/backend.env.local
+/backend.env.*.local
+/frontned.env
+/frontned.env.local
+/frontned.env.*.local
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+/.zed

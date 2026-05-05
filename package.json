@@ -1,0 +1,18 @@
+{
+  "name": "brainrot-app",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "dependencies": {
+    "cors": "^2.8.6",
+    "helmet": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "autoprefixer": "^10.5.0"
+  }
+}

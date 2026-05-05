@@ -1,0 +1,19 @@
+{
+  "name": "shared",
+  "version": "1.0.0",
+  "description": "Shared utilities, types, and interfaces for the Brainrot application.",
+  "type": "module",
+  "scripts": {
+    "build": "echo \"No build script needed for shared types.\" && exit 0",
+    "test": "echo \"No tests configured for shared types.\" && exit 0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/jest": "^29.0.0",
+    "@types/react": "^18.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.0.0",
+    "typescript": "^5.0.0"
+  }
+}
