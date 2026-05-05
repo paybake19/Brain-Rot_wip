@@ -24,7 +24,7 @@ import sttRouter from "./routes/stt.route";
 import visionRouter from "./routes/vision.route";
 import browserRouter from "./routes/browser.route";
 import systemRouter from "./routes/system.route";
-import calendarRouter from "./routes/calendar.route";
+//import calendarRouter from "./routes/calendar.route";
 
 // --- Middleware Imports ---
 import { authMiddleware } from "./middleware/auth.middleware";
@@ -67,7 +67,7 @@ app.use("/api/v1/stt", sttRouter);
 app.use("/api/v1/vision", visionRouter);
 app.use("/api/v1/browser", browserRouter);
 app.use("/api/v1/system", systemRouter);
-app.use("/api/v1/calendar", calendarRouter);
+//app.use("/api/v1/calendar", calendarRouter);
 
 // --- 404 Handler ---
 app.use((req: Request, res: Response) => {

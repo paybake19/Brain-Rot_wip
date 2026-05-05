@@ -19,7 +19,7 @@ router.post("/stream", async (req: Request, res: Response) => {
   }
 
   const { messages, imageBase64 } = parsed.data;
-  const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
+  const lastUserMessage = [...messages].reverse().find((m: { role: string; content: string }) => m.role === "user");
 
   setSSEHeaders(res);
 

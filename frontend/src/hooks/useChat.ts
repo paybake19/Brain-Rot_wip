@@ -1,20 +1,101 @@
-// Core chat hook — handles SSE connection, streaming state, and tool result display
+import { useRef, useCallback } from "react";
+import { useChatStore } from "../store/chat.store";
+import { streamChat, type ApiMessage } from "../api/chat.api";
 
 export function useChat() {
-  const store = useChatStore()
+  const store = useChatStore();
+  const abortRef = useRef<AbortController | null>(null);
 
-  async function sendMessage(content: string, imageBase64?: string) {
-    // SUDO: build new user Message and addMessage to store
-    // SUDO: setStreaming(true)
-    // SUDO: open EventSource (or fetch with ReadableStream) to POST /api/chat/stream
-    // SUDO: on each SSE event:
-    //   - parse StreamChunk
-    //   - if type === 'token' → appendToken to the current assistant message
-    //   - if type === 'tool_call' → show tool indicator in UI (which tool is running)
-    //   - if type === 'tool_result' → append result as a styled block
-    //   - if type === 'done' → setStreaming(false)
-    //   - if type === 'error' → show error state → setStreaming(false)
-  }
+  const sendMessage = useCallback(
+    async (content: string, imageBase64?: string) => {
+      if (store.isStreaming) return;
 
-  return { messages: store.messages, isStreaming: store.isStreaming, sendMessage }
+      // 1. Add user message to store
+      store.addMessage({ role: "user", content });
+
+      // 2. Create a blank streaming assistant message
+      const assistantId = store.addMessage({
+        role: "assistant",
+        content: "",
+        isStreaming: true,
+      });
+
+      store.setStreaming(true);
+
+      // 3. Build message history for API (exclude the blank assistant msg)
+      const history: ApiMessage[] = useChatStore
+        .getState()
+        .messages.filter((m) => m.id !== assistantId)
+        .map((m) => ({ role: m.role, content: m.content }));
+
+      // 4. Create abort controller so user can cancel mid-stream
+      abortRef.current = new AbortController();
+
+      try {
+        const stream = await streamChat(history, imageBase64, abortRef.current.signal);
+
+        for await (const chunk of stream) {
+          switch (chunk.type) {
+            case "token":
+              store.appendToken(assistantId, chunk.content);
+              break;
+
+            case "tool_call": {
+              // Parse the tool call payload sent by the backend
+              try {
+                const parsed = JSON.parse(chunk.content) as {
+                  name: string;
+                  args: Record<string, unknown>;
+                };
+                store.pushToolCall(assistantId, {
+                  name: parsed.name,
+                  args: parsed.args,
+                });
+                store.setActiveToolCall(parsed.name);
+              } catch {
+                // malformed tool_call chunk — skip
+              }
+              break;
+            }
+
+            case "done":
+              store.setActiveToolCall(null);
+              store.finalizeMessage(assistantId);
+              store.setStreaming(false);
+              break;
+
+            case "error":
+              store.setMessageError(assistantId, chunk.content);
+              store.setActiveToolCall(null);
+              store.setStreaming(false);
+              break;
+          }
+        }
+      } catch (err: unknown) {
+        // Ignore abort — that's intentional cancellation
+        if (err instanceof Error && err.name === "AbortError") {
+          store.finalizeMessage(assistantId);
+        } else {
+          const msg = err instanceof Error ? err.message : "Unknown error";
+          store.setMessageError(assistantId, msg);
+        }
+        store.setActiveToolCall(null);
+        store.setStreaming(false);
+      }
+    },
+    [store]
+  );
+
+  const cancelStream = useCallback(() => {
+    abortRef.current?.abort();
+  }, []);
+
+  return {
+    messages: store.messages,
+    isStreaming: store.isStreaming,
+    activeToolCall: store.activeToolCall,
+    sendMessage,
+    cancelStream,
+    clearMessages: store.clearMessages,
+  };
 }
