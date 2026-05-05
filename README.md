@@ -1,8 +1,9 @@
+<<<<<<< HEAD
 # 🧠 Brain Rot [WIP]
 
 **Brain Rot** is a local-first LLM interface designed to act as a operating system — deeply integrated with your Obsidian vault and built for real-time interaction, automation, and agent-based workflows.
 
-This is not just a chat UI.
+This is not just a chat UI - its a bandwagon second brain.
 It’s a step toward a **Jarvis-like system** that can think, act, observe, and organize alongside you.
 
 ---
@@ -224,3 +225,4 @@ TBD
 This isn’t just a UI.
 
 It’s the beginning of a **personal intelligence layer**.
+=======

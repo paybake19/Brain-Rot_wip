@@ -1,18 +1,40 @@
-# Environment variables - never commit these
-.env
-.env.local
-.env.*.local
-/backend.env
-/backend.env.local
-/backend.env.*.local
-/frontned.env
-/frontned.env.local
-/frontned.env.*.local
+
+# Environment variable files: Targets all directories for consistency
+**/.env
+**/.env.*
+**/.local.env
+backend/*.env
+backend/*.local.env
+frontend/*.env
+frontend/*.local.env
+shared/*.env
+shared/*.local.env
+
+# Specific secret/config files (if they exist in the root or subdirectories)
+secrets.json
+config.json
+vault/
+
 
 # Dependencies
 node_modules/
+vendor/
 
-# Build output
-dist/
+# Build output (general coverage)
+/dist/
+/build/
+*.build/
 
-/.zed
+# Cache and temporary files
+*.log
+*.tmp
+__pycache__/
+
+# Editor/IDE specific files
+.idea/
+.vscode/
+.zed/
+
+# OS files
+.DS_Store
+Thumbs.db
