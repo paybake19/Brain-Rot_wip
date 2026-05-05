@@ -1,5 +1,5 @@
-<<<<<<< HEAD
-# 🧠 Brain Rot [WIP]
+
+# Brain Rot [WIP]
 
 **Brain Rot** is a local-first LLM interface designed to act as a operating system — deeply integrated with your Obsidian vault and built for real-time interaction, automation, and agent-based workflows.
 
