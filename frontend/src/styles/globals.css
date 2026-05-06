@@ -98,6 +98,12 @@
   }
 }
 
+@keyframes drift {
+  0%   { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
+  50%  { transform: translate(30px, -20px) scale(1.15); filter: blur(55px); }
+  100% { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
+}
+
 @keyframes drift2 {
   0%   { transform: translate(0px, 0px) scale(1); }
   50%  { transform: translate(-40px, 25px) scale(1.15); }
@@ -129,7 +135,7 @@
 
 @keyframes slowRotate {
   from { transform: rotate(0deg) scale(1); }
-  to { transform: rotate(5deg) scale(1.1); }
+  to { transform: rotate(20deg) scale(1.1); }
 }
 
 @keyframes breathe {
