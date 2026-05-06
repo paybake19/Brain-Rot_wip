@@ -81,10 +81,21 @@
    ANIMATIONS (GLOBAL)
 ========================= */
 
-@keyframes drift {
-  0%   { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
-  50%  { transform: translate(30px, -20px) scale(1.15); filter: blur(55px); }
-  100% { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
+@layer components {
+  .glow-neon {
+    box-shadow:
+      0 0 0 1px rgba(var(--accent), 0.2),
+      0 0 12px rgba(var(--accent), 0.25),
+      0 0 40px rgba(var(--accent), 0.15),
+      0 20px 60px rgba(0, 0, 0, 0.6);
+  }
+
+  .glow-multi {
+    box-shadow:
+      0 0 12px rgba(255, 0, 200, 0.25),
+      0 0 20px rgba(0, 200, 255, 0.2),
+      0 0 40px rgba(0, 255, 150, 0.15);
+  }
 }
 
 @keyframes drift2 {
