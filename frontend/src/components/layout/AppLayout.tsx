@@ -11,7 +11,6 @@ export default function AppLayout() {
   const [theme, setTheme] = useState<'default' | 'psychedelic'>('default')
 
   // Theme is controlled ONLY via data-theme on <html>.
-  // Default = no attribute. Custom = set attribute.
   useEffect(() => {
     const root = document.documentElement
     if (theme === 'default') {

@@ -4,15 +4,22 @@ import TypingIndicator from "./TypingIndicator"
 
 export default function ChatWindow() {
   return (
-    <div className="flex flex-col h-full">
-
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+    <div
+      className="flex flex-col h-full transition-colors duration-700"
+      style={{ background: 'rgb(var(--bg) / 0.3)' }}
+    >
+      {/* Message list — uses CSS vars via Message/TypingIndicator components */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
         <Message role="assistant" content="Welcome to Brain Rot." />
-        <Message role="user" content="Hello." />
+        <Message role="user"      content="Hello." />
         <TypingIndicator />
       </div>
 
-      <div className="border-t border-white/10 p-2">
+      {/* Input area */}
+      <div
+        className="border-t p-2 transition-colors duration-700"
+        style={{ borderColor: 'rgb(var(--text) / 0.06)' }}
+      >
         <ChatInput />
       </div>
     </div>

@@ -6,24 +6,30 @@
 ========================= */
 @layer base {
   :root {
-    /* Space-separated values → enables rgb(var(--x) / 0.4) opacity syntax */
-    --bg:     12 12 12;
-    --panel:  18 18 18;
-    --text:   235 235 235;
-    --accent: 34 197 94;
+    --bg:       12 12 12;
+    --panel:    18 18 18;
+    --text:     235 235 235;
+    --accent:   34 197 94;
+    --accent-2: 34 197 94;
+    --accent-3: 251 191 36;
+    --accent-4: 248 113 113;
   }
 
   /* =========================
-     PSYCHEDELIC THEME
-     Activated via: <html data-theme="psychedelic">
-     To restore default: remove data-theme attribute entirely
+     PSYCHEDELIC THEME: DMT FRACTAL SHIFT
+     Full spectrum, high contrast, aggressive neon.
   ========================= */
   [data-theme="psychedelic"] {
-    /* Psychedelic 180 */
-    --bg: 10 5 15;
-    --panel: 25 10 40;
-    --accent: 210 100 255; /* Soft Magenta */
-    --accent-2: 80 220 200; /* Teal Glow */
+    --bg:       5 0 10;           /* Pitch dark violet/black base */
+    --panel:    15 0 25;          /* Deep void panel */
+    --text:     255 255 255;      /* Pure white for maximum contrast */
+
+    /* Core primary starting points (will constantly hue-shift) */
+    --accent:   255 0 255;        /* Pure Magenta */
+    --accent-2: 0 255 255;        /* Pure Cyan */
+    --accent-3: 255 255 0;        /* Pure Yellow */
+    --accent-4: 0 255 0;          /* Pure Lime Green */
+
     --font-main: "Georgia", serif;
     --border-radius: 24px;
   }
@@ -45,9 +51,7 @@
     overflow: hidden;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    transition:
-      background-color 0.6s ease,
-      color 0.6s ease;
+    transition: background-color 0.6s ease, color 0.6s ease;
   }
 
   * { box-sizing: border-box; }
@@ -72,89 +76,231 @@
       transparent 1px
     );
     background-size: 24px 24px;
-  };
-  .bg-fractal-animated {
-    animation: slowRotate 30s ease-in-out infinite alternate;
   }
 }
-/* =========================
-   ANIMATIONS (GLOBAL)
-========================= */
 
+/* =========================
+   COMPONENTS
+========================= */
 @layer components {
+
+  /* ── Matrix Glass (Default) ───────────────────────────────────── */
+  .glass {
+    background: rgb(var(--panel) / 0.5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgb(var(--text) / 0.07);
+  }
+
+  .glass-strong {
+    background: rgb(var(--panel) / 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgb(var(--accent) / 0.2);
+    box-shadow:
+      0 0 0 1px rgb(var(--accent) / 0.08),
+      0 8px 32px rgb(0 0 0 / 0.5),
+      0 0 40px rgb(var(--accent) / 0.08);
+  }
+
+  /* ── PSYCHEDELIC EXPLICIT MODULES (Fractal Breathing) ──────────── */
+
+  .psych-glass {
+    background: rgba(var(--panel) / 0.4);
+    /* Hyper-saturates whatever background colors pass behind it */
+    backdrop-filter: blur(8px) saturate(250%) contrast(120%);
+    -webkit-backdrop-filter: blur(8px) saturate(250%) contrast(120%);
+    border: 1px solid rgb(var(--accent-2) / 0.6);
+    box-shadow:
+      inset 0 0 20px rgb(var(--accent-3) / 0.2),
+      0 0 15px rgb(var(--accent) / 0.3);
+    /* Constantly shifts the border and shadow colors through the rainbow */
+    animation: rainbow-shift 8s linear infinite;
+  }
+
+  .psych-glass-strong {
+    background: rgba(10, 0, 20, 0.6);
+    /* Maximum color distortion */
+    backdrop-filter: blur(16px) saturate(350%) contrast(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(350%) contrast(150%);
+    border: 2px solid rgb(var(--accent-4) / 0.7);
+    border-bottom-color: rgb(var(--accent) / 0.9);
+    box-shadow:
+      0 0 30px rgb(var(--accent) / 0.6),
+      inset 0 0 30px rgb(var(--accent-2) / 0.5),
+      inset 0 0 60px rgb(var(--accent-3) / 0.2);
+    animation: psych-breathe-panel 6s ease-in-out infinite, rainbow-shift 12s linear infinite;
+  }
+
+  .psych-glow-neon {
+    filter: drop-shadow(0 0 15px rgb(var(--accent))) drop-shadow(0 0 30px rgb(var(--accent-2)));
+    animation: rainbow-shift 5s linear infinite;
+  }
+
+  .psych-text-neon {
+    color: rgb(var(--text));
+    text-shadow:
+      0 0 10px rgb(var(--accent)),
+      0 0 20px rgb(var(--accent-2)),
+      0 0 40px rgb(var(--accent-3));
+    animation: rainbow-shift 4s linear infinite;
+  }
+
+  .psych-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    cursor: pointer;
+    background: rgb(var(--bg) / 0.9);
+    border: 1px solid rgb(var(--accent-4));
+    color: rgb(var(--text));
+    text-shadow: 0 0 8px rgb(var(--accent-4));
+    box-shadow: inset 0 0 15px rgb(var(--accent-4) / 0.4);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: rainbow-shift 10s linear infinite;
+  }
+
+  .psych-btn:hover {
+    background: rgb(var(--accent) / 0.3);
+    border-color: rgb(var(--text));
+    transform: scale(1.05);
+    box-shadow:
+      inset 0 0 30px rgb(var(--accent) / 0.8),
+      0 0 30px rgb(var(--accent-3) / 0.8);
+  }
+
+  /* ── Form primitives ──────────────────────────────────────────── */
+  .input {
+    background: transparent;
+    outline: none;
+    color: rgb(var(--text));
+    font-size: 14px;
+    width: 100%;
+    caret-color: rgb(var(--accent));
+    transition: color 0.4s ease;
+  }
+
+  .input::placeholder {
+    color: rgb(var(--text) / 0.25);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid rgb(var(--text) / 0.1);
+    color: rgb(var(--text) / 0.6);
+    background: transparent;
+    transition: all 0.2s ease;
+  }
+
+  .btn:hover {
+    background: rgb(var(--text) / 0.05);
+    color: rgb(var(--text) / 0.9);
+  }
+
+  .btn-accent {
+    border-color: rgb(var(--accent) / 0.4);
+    color: rgb(var(--accent));
+    background: rgb(var(--accent) / 0.08);
+  }
+
+  .btn-accent:hover {
+    background: rgb(var(--accent) / 0.18);
+    box-shadow: 0 0 16px rgb(var(--accent) / 0.3);
+  }
+
+  /* ── Default Glow effects ────────────────────────────────────── */
   .glow-neon {
     box-shadow:
-      0 0 0 1px rgba(var(--accent), 0.2),
-      0 0 12px rgba(var(--accent), 0.25),
-      0 0 40px rgba(var(--accent), 0.15),
-      0 20px 60px rgba(0, 0, 0, 0.6);
+      0 0 0 1px rgb(var(--accent) / 0.2),
+      0 0 12px rgb(var(--accent) / 0.25),
+      0 0 40px rgb(var(--accent) / 0.15),
+      0 20px 60px rgb(0 0 0 / 0.6);
   }
 
-  .glow-multi {
+  .hover-glow:hover {
     box-shadow:
-      0 0 12px rgba(255, 0, 200, 0.25),
-      0 0 20px rgba(0, 200, 255, 0.2),
-      0 0 40px rgba(0, 255, 150, 0.15);
+      0 0 10px rgb(var(--accent) / 0.3),
+      0 0 30px rgb(var(--accent) / 0.2);
+  }
+
+  .hover-psychedelic:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow:
+      0 0 20px rgb(255 0 200 / 0.2),
+      0 0 40px rgb(0 200 255 / 0.15);
   }
 }
 
+/* =========================
+   ANIMATIONS (The DMT Engine)
+========================= */
+
+/* Constantly cycles the color wheel for all psych elements */
+@keyframes rainbow-shift {
+  0%   { filter: hue-rotate(0deg); }
+  100% { filter: hue-rotate(360deg); }
+}
+
+/* Panel breathing - physically distorts scale and shadow */
+@keyframes psych-breathe-panel {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 30px rgb(var(--accent) / 0.4), inset 0 0 20px rgb(var(--accent-3) / 0.3);
+  }
+  50% {
+    transform: scale(1.02);
+    box-shadow: 0 0 60px rgb(var(--accent-2) / 0.6), inset 0 0 50px rgb(var(--accent-4) / 0.5);
+  }
+}
+
+/* OVERRIDING BOOTSCREEN ANIMATIONS
+  These are explicitly called in BootScreen.tsx. We are hijacking them
+  to create an aggressive, full-spectrum shifting fractal effect.
+*/
+
+/* Transforms the background tunnel into a shifting, high-contrast kaleidoscope */
+@keyframes breathe {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.3;
+    filter: hue-rotate(0deg) saturate(200%) contrast(150%);
+  }
+  50% {
+    transform: scale(1.4);
+    opacity: 0.8;
+    filter: hue-rotate(180deg) saturate(400%) contrast(250%);
+  }
+}
+
+/* Makes the mandala spin, scale aggressively, and strobe through the rainbow */
+@keyframes slow-rotate {
+  0%   { transform: rotate(0deg) scale(1); filter: hue-rotate(0deg) saturate(100%); }
+  50%  { transform: rotate(180deg) scale(1.6); filter: hue-rotate(180deg) saturate(300%); opacity: 0.6; }
+  100% { transform: rotate(360deg) scale(1); filter: hue-rotate(360deg) saturate(100%); }
+}
+
+/* Makes the background blobs whip around rapidly instead of drifting softly */
+@keyframes drift-soft {
+  0%   { transform: translate(0, 0) scale(1); filter: hue-rotate(0deg); }
+  33%  { transform: translate(60px, -50px) scale(1.3); filter: hue-rotate(120deg); }
+  66%  { transform: translate(-40px, 60px) scale(0.8); filter: hue-rotate(240deg); }
+  100% { transform: translate(0, 0) scale(1); filter: hue-rotate(360deg); }
+}
+
+/* General Utilities */
 @keyframes drift {
   0%   { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
   50%  { transform: translate(30px, -20px) scale(1.15); filter: blur(55px); }
   100% { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
-}
-
-@keyframes drift2 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  50%  { transform: translate(-40px, 25px) scale(1.15); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-
-@keyframes drift3 {
-  0%   { transform: translate(0px, 0px) scale(1); }
-  50%  { transform: translate(20px, 30px) scale(1.12); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 0.05; }
-  50% { opacity: 0.09; }
-}
-
-@keyframes hueShift {
-  0%   { filter: hue-rotate(0deg); }
-  50%  { filter: hue-rotate(10deg); }
-  100% { filter: hue-rotate(0deg); }
-}
-
-@keyframes warp {
-  0%   { transform: scale(1) rotate(0deg); }
-  50%  { transform: scale(1.05) rotate(1deg); }
-  100% { transform: scale(1) rotate(0deg); }
-}
-
-@keyframes slowRotate {
-  from { transform: rotate(0deg) scale(1); }
-  to { transform: rotate(20deg) scale(1.1); }
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.08; filter: blur(40px); }
-  50% { transform: scale(1.1); opacity: 0.15; filter: blur(60px); }
-}
-
-@keyframes slow-rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes drift-soft {
-  0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(40px, -30px) scale(1.1); }
-  100% { transform: translate(0, 0) scale(1); }
-}
-
-@keyframes hueShift {
-  0% { filter: hue-rotate(0deg); }
-  100% { filter: hue-rotate(360deg); }
 }
