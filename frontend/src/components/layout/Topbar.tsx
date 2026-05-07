@@ -52,7 +52,7 @@ export default function Topbar({ tilingEnabled, onToggleTiling, theme, onToggleT
             <rect x="1" y="1" width="9" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.1"/>
             <path d="M3 3.5h5M3 5.5h5M3 7.5h3" stroke="currentColor" strokeWidth="1" strokeLinecap="round"/>
           </svg>
-          Generate Report
+          Create Report
         </button>
       </div>
 
@@ -74,19 +74,22 @@ export default function Topbar({ tilingEnabled, onToggleTiling, theme, onToggleT
 
         <div className="w-px h-3.5 bg-[rgb(var(--text)/0.1)]" />
 
-        {/* Theme indicator */}
-        <div className="flex items-center gap-1.5 border border-[rgb(var(--accent)/0.2)] rounded-md px-2 py-1.25 glass-strong">
-          <span className="text-[10px]">{theme === 'psychedelic' ? '👁' : '🧠'}</span>
-          <span className="text-[10px] text-[rgb(var(--text)/0.6)] font-medium transition-colors duration-700">
-            {theme === 'psychedelic' ? 'Net of Being' : 'Matrix'}
-          </span>
-        </div>
+        {/* Combined Theme Toggle / Indicator */}
+                <button
+                  onClick={onToggleTheme}
+                  className={`flex items-center gap-1.5 rounded-md px-2 py-1.25 cursor-pointer transition-all duration-700 active:scale-95 ${
+                    theme === 'psychedelic'
+                      ? 'psych-glass-strong border-[rgb(var(--accent-4)/0.5)] hover:border-[rgb(var(--accent-4))] hover:shadow-[0_0_15px_rgb(var(--accent-4)/0.4)]'
+                      : 'glass-strong border border-[rgb(var(--accent)/0.2)] hover-glow'
+                  }`}
+                >
+                  <span className="text-[10px]">{theme === 'psychedelic' ? '👁' : '🧠'}</span>
+                  <span className={`text-[10px] transition-colors duration-700 ${theme === 'psychedelic' ? 'psych-text-neon uppercase tracking-widest font-bold' : 'text-[rgb(var(--text)/0.6)] font-medium'}`}>
+                    {theme === 'psychedelic' ? 'Net of Being' : 'Matrix'}
+                  </span>
+                </button>
 
-        <button onClick={onToggleTheme} className="btn hover-glow w-7 h-7 !p-0 rounded-lg">
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-            <circle cx="6" cy="6" r="2.5" stroke="currentColor" strokeWidth="1.1"/>
-          </svg>
-        </button>
+
 
         <button onClick={onToggleTiling} className={`flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-medium rounded-lg transition-colors duration-700 ${tilingEnabled ? 'btn-accent glow-neon' : 'btn glass hover-glow'}`}>
           <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
