@@ -1,31 +1,58 @@
-// Singleton Playwright instance — launch once on startup, reuse across requests
+import { Browser, chromium, Page } from 'playwright'
 
-import { Browser, chromium } from 'playwright'
-
+// Singleton browser instance
 let browserInstance: Browser | null = null
+let pageInstance: Page | null = null
 
 export async function getBrowser(): Promise<Browser> {
-  // SUDO: if browserInstance is null or not connected → launch chromium headless
-  // SUDO: return browserInstance
+  if (!browserInstance || !browserInstance.isConnected()) {
+    browserInstance = await chromium.launch({
+      headless: true,
+    })
+  }
+
+  return browserInstance
+}
+
+export async function getPage(): Promise<Page> {
+  if (!pageInstance || pageInstance.isClosed()) {
+    const browser = await getBrowser()
+    pageInstance = await browser.newPage()
+  }
+
+  return pageInstance
 }
 
 export async function closeBrowser(): Promise<void> {
-  // SUDO: if browserInstance → browserInstance.close() → set to null
+  if (browserInstance) {
+    await browserInstance.close()
+
+    browserInstance = null
+    pageInstance = null
+  }
 }
 
 // Core Playwright interaction primitives
 
-import { getBrowser } from './browser'
-
 export async function navigate(url: string): Promise<void> {
-  // SUDO: get page from getBrowser()
-  // SUDO: page.goto(url, { waitUntil: 'domcontentloaded' })
+  const page = await getPage()
+
+  await page.goto(url, {
+    waitUntil: 'domcontentloaded',
+  })
 }
 
 export async function clickElement(selector: string): Promise<void> {
-  // SUDO: page.click(selector)
+  const page = await getPage()
+
+  await page.click(selector)
 }
 
-export async function fillInput(selector: string, value: string): Promise<void> {
-  // SUDO: page.fill(selector, value)
+export async function fillInput(
+  selector: string,
+  value: string
+): Promise<void> {
+  const page = await getPage()
+
+  await page.fill(selector, value)
 }

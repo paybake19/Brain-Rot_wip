@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import execa from "execa";
 import { isCommandAllowed } from "../middleware/allowlist.middleware";
 import { logger } from "../services/logger.service";
 

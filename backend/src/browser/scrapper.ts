@@ -1,3 +1,5 @@
+// Canonical file — rename src/browser/scrapper.ts → src/browser/scraper.ts
+// (removes double-p typo that breaks all 4 import sites)
 import { getPage } from "./browser";
 
 export async function scrapePage(): Promise<{ text: string; links: string[] }> {

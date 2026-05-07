@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import execa from "execa";
 import fs from "fs/promises";
 import path from "path";
 import { paths } from "../config/paths";

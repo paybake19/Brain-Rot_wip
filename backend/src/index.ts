@@ -1,47 +1,54 @@
-import express, { Application, Request, Response, NextFunction } from "express";
+import express, { Application, Request, Response } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import * as path from "path";
 import helmet from "helmet";
-
-// --- Configuration Loading ---
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
-
-const app: Application = express();
-const PORT = process.env.PORT || 3001;
-
-// --- Middleware Setup ---
-app.use(helmet());
-app.use(cors({ origin: "http://localhost:5173" }));
-app.use(express.json({ limit: "10mb" }));
-app.use(express.urlencoded({ extended: true }));
 
 // --- Route Imports ---
 import chatRouter from "./routes/chat.route";
 import vaultRouter from "./routes/vault.route";
 import toolsRouter from "./routes/tools.route";
 import sttRouter from "./routes/stt.route";
+//import ttsRouter from "./routes/tts.route";
 import visionRouter from "./routes/vision.route";
 import browserRouter from "./routes/browser.route";
 import systemRouter from "./routes/system.route";
-//import calendarRouter from "./routes/calendar.route";
+// import calendarRouter from "./routes/calendar.route";
 
 // --- Middleware Imports ---
 import { authMiddleware } from "./middleware/auth.middleware";
 import { rateLimitMiddleware } from "./middleware/rateLimit.middleware";
 import { errorMiddleware } from "./middleware/error.middleware";
 
-// --- Vector / Watcher / Scheduler Imports ---
-import { initVectorStore } from "./vector/store";
-import { startVaultWatcher } from "./vector/watcher";
+// --- Service Imports ---
 import { startScheduler } from "./scheduler/cron";
 import { registerTriggers } from "./scheduler/triggers";
 import { logger } from "./services/logger.service";
 
-// --- Rate Limiting (global) ---
+// ---------------------------------------------------------------------------
+// Configuration
+// ---------------------------------------------------------------------------
+
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+
+const app: Application = express();
+const PORT = process.env.PORT || 3001;
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "http://localhost:5173";
+
+// ---------------------------------------------------------------------------
+// Global Middleware
+// ---------------------------------------------------------------------------
+
+app.use(helmet());
+app.use(cors({ origin: CORS_ORIGIN }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 app.use(rateLimitMiddleware);
 
-// --- Public Routes (no auth) ---
+// ---------------------------------------------------------------------------
+// Public Routes (no auth)
+// ---------------------------------------------------------------------------
+
 app.get("/", (_req: Request, res: Response) => {
   res.status(200).json({
     message: "BrainRot Backend Service Running",
@@ -58,18 +65,25 @@ app.get("/health", (_req: Request, res: Response) => {
   });
 });
 
-// --- Authenticated API Routes ---
+// ---------------------------------------------------------------------------
+// Authenticated API Routes
+// ---------------------------------------------------------------------------
+
 app.use("/api/v1", authMiddleware);
 app.use("/api/v1/chat", chatRouter);
 app.use("/api/v1/vault", vaultRouter);
 app.use("/api/v1/tools", toolsRouter);
 app.use("/api/v1/stt", sttRouter);
+app.use("/api/v1/tts", ttsRouter);
 app.use("/api/v1/vision", visionRouter);
 app.use("/api/v1/browser", browserRouter);
 app.use("/api/v1/system", systemRouter);
 //app.use("/api/v1/calendar", calendarRouter);
 
-// --- 404 Handler ---
+// ---------------------------------------------------------------------------
+// 404 Handler
+// ---------------------------------------------------------------------------
+
 app.use((req: Request, res: Response) => {
   res.status(404).json({
     error: "Not Found",
@@ -77,18 +91,18 @@ app.use((req: Request, res: Response) => {
   });
 });
 
-// --- Global Error Handler (must be last) ---
+// ---------------------------------------------------------------------------
+// Global Error Handler (must be last)
+// ---------------------------------------------------------------------------
+
 app.use(errorMiddleware);
 
-// --- Bootstrap ---
+// ---------------------------------------------------------------------------
+// Bootstrap
+// ---------------------------------------------------------------------------
+
 const startServer = async (): Promise<void> => {
   try {
-    await initVectorStore();
-    logger.info("✅ Vector store initialized");
-
-    startVaultWatcher();
-    logger.info("✅ Vault watcher started");
-
     registerTriggers();
     logger.info("✅ Event triggers registered");
 
@@ -100,6 +114,7 @@ const startServer = async (): Promise<void> => {
       logger.info(`✨ 🚀 BrainRot Backend initialized`);
       logger.info(`   http://localhost:${PORT}`);
       logger.info(`   Model: ${process.env.OLLAMA_MODEL_DEFAULT}`);
+      logger.info(`   CORS:  ${CORS_ORIGIN}`);
       logger.info(`============================================\n`);
     });
   } catch (err) {

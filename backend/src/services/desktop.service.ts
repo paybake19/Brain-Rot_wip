@@ -1,5 +1,5 @@
 import clipboardy from "clipboardy";
-import notifier from "node-notifier";
+//import notifier from "node-notifier";
 import { logger } from "./logger.service";
 
 export class DesktopService {
@@ -11,10 +11,10 @@ export class DesktopService {
     await clipboardy.write(text);
   }
 
-  notify(title: string, body: string): void {
-    notifier.notify({ title, message: body });
-    logger.info("Desktop notification sent", { title });
-  }
+//  notify(title: string, body: string): void {
+//    notifier.notify({ title, message: body });
+//    logger.info("Desktop notification sent", { title });
+//  }
 }
 
 export const desktopService = new DesktopService();
