@@ -4,10 +4,19 @@ const QUICK_ACTIONS = ['Research', 'Code', 'Write', 'Analyze']
 const TOOL_PILLS = ['Web Search', 'Deep Research', 'File Analysis', 'Codebase Scan']
 
 const BrainIcon = ({ size = 32 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="glow-neon transition-[filter] duration-700">
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="glow-neon transition-all duration-700">
     <path d="M12 4.5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18.5V4.5Z" stroke="rgb(var(--accent))" strokeWidth="1.5" />
     <path d="M12 4.5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18.5V4.5Z" stroke="rgb(var(--accent))" strokeWidth="1.5" />
     <circle cx="12" cy="18.5" r="1.5" fill="rgb(var(--accent))" className="animate-pulse" />
+  </svg>
+)
+
+// Redesigned Eye: More compact, perfectly centered, explicit transparent fills
+const EyeIcon = ({ size = 32 }: { size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="psych-glow-neon transition-all duration-700 overflow-visible">
+    <path d="M12 6.5C8 6.5 4 12 4 12s4 5.5 8 5.5 8-5.5 8-5.5-4-5.5-8-5.5z" stroke="rgb(var(--accent))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="transparent" />
+    <circle cx="12" cy="12" r="2.5" stroke="rgb(var(--accent-2))" strokeWidth="1.5" fill="transparent" />
+    <circle cx="12" cy="12" r="1" fill="rgb(var(--accent-3))" className="animate-pulse" />
   </svg>
 )
 
@@ -62,7 +71,10 @@ export default function BootScreen({ theme }: Props) {
         <div className="mb-8 w-[72px] h-[72px] rounded-full flex items-center justify-center relative glass-strong glow-neon transition-all duration-700">
           <div className="absolute rounded-full animate-pulse border border-dashed border-[rgb(var(--accent)/0.2)]" style={{ width: '135%', height: '135%' }} />
           <div className="absolute rounded-full opacity-30 border border-dotted border-[rgb(var(--accent)/0.15)]" style={{ width: '190%', height: '190%' }} />
-          <BrainIcon size={34} />
+
+          {/* THE ICON SWAP */}
+          {theme === 'psychedelic' ? <EyeIcon size={34} /> : <BrainIcon size={34} />}
+
         </div>
 
         <h1 className="text-[34px] font-serif mb-2 text-center text-neon transition-colors duration-700 tracking-tight">

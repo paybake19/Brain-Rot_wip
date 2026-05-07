@@ -20,15 +20,15 @@
      Full spectrum, high contrast, aggressive neon.
   ========================= */
   [data-theme="psychedelic"] {
-    --bg:       5 0 10;           /* Pitch dark violet/black base */
-    --panel:    15 0 25;          /* Deep void panel */
-    --text:     255 255 255;      /* Pure white for maximum contrast */
+    --bg:       5 2 10;           /* Pitch dark violet/black base */
+    --panel:    15 5 25;          /* Deep void panel */
+    --text:     230 255 250;      /* Pure white for maximum contrast */
 
     /* Core primary starting points (will constantly hue-shift) */
     --accent:   255 0 255;        /* Pure Magenta */
     --accent-2: 0 255 255;        /* Pure Cyan */
-    --accent-3: 255 255 0;        /* Pure Yellow */
-    --accent-4: 0 255 0;          /* Pure Lime Green */
+    --accent-3: 150 255 0;        /* Pure Yellow */
+    --accent-4: 100 0 250;          /* Pure Lime Green */
 
     --font-main: "Georgia", serif;
     --border-radius: 24px;
@@ -303,4 +303,45 @@
   0%   { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
   50%  { transform: translate(30px, -20px) scale(1.15); filter: blur(55px); }
   100% { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
+}
+
+/* =========================
+   PSYCHEDELIC SIDEBAR BREATHING
+========================= */
+
+/* Target the Left Sidebar */
+[data-theme="psychedelic"] aside:first-of-type {
+  /* Anchor to the left wall so it breathes inward */
+  transform-origin: left center;
+  animation: psych-layout-breathe 7s ease-in-out infinite, rainbow-shift 15s linear infinite;
+}
+
+/* Target the Right Panel */
+[data-theme="psychedelic"] aside:last-of-type {
+  /* Anchor to the right wall so it breathes inward */
+  transform-origin: right center;
+  /* Slightly different timing so the breathing feels organic, not robotic */
+  animation: psych-layout-breathe 9s ease-in-out infinite, rainbow-shift 12s linear infinite;
+}
+
+/* The Layout Breathing Engine */
+@keyframes psych-layout-breathe {
+  0%, 80% {
+    /* Resting state */
+    transform: scaleX(1);
+    box-shadow:
+      inset 0 0 20px rgb(var(--accent-3) / 0.1),
+      0 0 15px rgb(var(--accent) / 0.1);
+    background: rgba(var(--panel) / 0.4);
+    backdrop-filter: blur(12px) saturate(150%);
+  }
+  50% {
+    /* Inhale / Expansion: The panels physically stretch inward by 3% */
+    transform: scaleX(1.03);
+    box-shadow:
+      inset 0 0 50px rgb(var(--accent-2) / 0.3),
+      0 0 40px rgb(var(--accent-4) / 0.3);
+    background: rgba(var(--panel) / 0.6);
+    backdrop-filter: blur(16px) saturate(250%);
+  }
 }
