@@ -1,7 +1,8 @@
 import dotenv from "dotenv";
 import path from "path";
 
-dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+// __dirname = backend/src/config → ../../.. = brainrot-app root
+dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
 
 function require_env(key: string): string {
   const val = process.env[key];
@@ -11,29 +12,26 @@ function require_env(key: string): string {
 
 export const config = {
   port: process.env.PORT || 3001,
+  nodeEnv: process.env.NODE_ENV || "development",
   apiKey: require_env("BRAINROT_API_KEY"),
-
+  corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
   ollama: {
     baseUrl: require_env("OLLAMA_BASE_URL"),
     model: require_env("OLLAMA_MODEL_DEFAULT"),
-    embedModel: "nomic-embed-text",
+    embedModel: process.env.OLLAMA_EMBED_MODEL || "nomic-embed-text",
   },
-
   obsidian: {
     host: require_env("OBSIDIAN_HOST"),
     port: parseInt(process.env.OBSIDIAN_PORT || "27124"),
     apiKey: require_env("OBSIDIAN_API_KEY"),
   },
-
   vault: {
-    path: require_env("VAULT_PATH"),
+    path: process.env.VAULT_PATH || "",
   },
-
   whisper: {
     binPath: process.env.WHISPER_BIN_PATH || "",
   },
-
   lancedb: {
-    path: process.env.LANCEDB_PATH || path.join(process.cwd(), ".lancedb"),
+    path: process.env.LANCEDB_PATH || path.join(__dirname, "../../.lancedb"),
   },
 };

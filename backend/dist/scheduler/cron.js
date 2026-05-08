@@ -5,7 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.startScheduler = startScheduler;
 const node_cron_1 = __importDefault(require("node-cron"));
-const dailyBriefing_job_1 = require("./jobs/dailyBriefing.job");
+const dailyBrief_job_1 = require("./jobs/dailyBrief.job");
 const vaultReindex_job_1 = require("./jobs/vaultReindex.job");
 const reminderCheck_job_1 = require("./jobs/reminderCheck.job");
 const logger_service_1 = require("../services/logger.service");
@@ -13,7 +13,7 @@ function startScheduler() {
     // Daily briefing at 8:00 AM
     node_cron_1.default.schedule("0 8 * * *", () => {
         logger_service_1.logger.info("Cron: daily briefing");
-        dailyBriefing_job_1.dailyBriefingJob.run();
+        dailyBrief_job_1.dailyBriefingJob.run();
     });
     // Nightly vault reindex at 2:00 AM
     node_cron_1.default.schedule("0 2 * * *", () => {
