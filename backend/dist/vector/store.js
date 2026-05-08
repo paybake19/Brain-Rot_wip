@@ -42,7 +42,7 @@ const logger_service_1 = require("../services/logger.service");
 let db = null;
 let table = null;
 async function initVectorStore() {
-    const lancedb = await Promise.resolve().then(() => __importStar(require("vectordb")));
+    const lancedb = await Promise.resolve().then(() => __importStar(require("@lancedb/lancedb")));
     db = await lancedb.connect(paths_1.paths.lancedb);
     const tableNames = await db.tableNames();
     if (tableNames.includes("vault_chunks")) {
