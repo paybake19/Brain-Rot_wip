@@ -1,5 +1,5 @@
 import cron from "node-cron";
-import { dailyBriefingJob } from "./jobs/dailyBriefing.job";
+import { dailyBriefingJob } from "./jobs/dailyBrief.job";
 import { vaultReindexJob } from "./jobs/vaultReindex.job";
 import { reminderCheckJob } from "./jobs/reminderCheck.job";
 import { logger } from "../services/logger.service";

@@ -17,7 +17,7 @@ export default function StreamToken({ content, isStreaming = true }: Props) {
       <span>{content}</span>
       {isStreaming && (
         <span
-          className="inline-block w-[2px] h-[13px] ml-[2px] align-middle animate-pulse"
+          className="inline-block w-.5 h-3.25 ml-.5 align-middle animate-pulse"
           style={{ background: 'rgb(var(--accent))' }}
           aria-hidden="true"
         />
