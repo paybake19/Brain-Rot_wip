@@ -1,7 +1,12 @@
 import dotenv from "dotenv";
 import path from "path";
 
-const envPath = path.resolve(__dirname, ".env");
+const currentDir = __dirname;
+const rootDir = path.resolve(currentDir, "../../..");
+
+// 3. Combine root with the .env filename
+const envPath = path.join(rootDir, ".env");
+
 const result = dotenv.config({ path: envPath });
 
 // --- TEMPORARY DEBUG ---
