@@ -69,15 +69,15 @@ app.get("/health", (_req: Request, res: Response) => {
 // Authenticated API Routes
 // ---------------------------------------------------------------------------
 
-app.use("/api/v1", authMiddleware);
-app.use("/api/v1/chat", chatRouter);
-app.use("/api/v1/vault", vaultRouter);
-app.use("/api/v1/tools", toolsRouter);
-app.use("/api/v1/stt", sttRouter);
-app.use("/api/v1/tts", ttsRouter);
-app.use("/api/v1/vision", visionRouter);
-app.use("/api/v1/browser", browserRouter);
-app.use("/api/v1/system", systemRouter);
+app.use("/api/", authMiddleware);
+app.use("/api/chat", chatRouter);
+app.use("/api/vault", vaultRouter);
+app.use("/api/tools", toolsRouter);
+app.use("/api/stt", sttRouter);
+app.use("/api/tts", ttsRouter);
+app.use("/api/vision", visionRouter);
+app.use("/api/browser", browserRouter);
+app.use("/api/system", systemRouter);
 //app.use("/api/v1/calendar", calendarRouter);
 
 // ---------------------------------------------------------------------------

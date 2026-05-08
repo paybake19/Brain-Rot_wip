@@ -1,5 +1,4 @@
 // NOTE: We use fetch + ReadableStream, NOT EventSource.
-// EventSource only supports GET — our endpoint is POST.
 
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3001";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";

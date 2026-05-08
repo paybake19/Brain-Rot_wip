@@ -1,9 +1,16 @@
 import dotenv from "dotenv";
 import path from "path";
 
-// __dirname = backend/src/config → ../../.. = brainrot-app root
-dotenv.config({ path: path.resolve(__dirname, "../../../.env") });
+const envPath = path.resolve(__dirname, ".env");
+const result = dotenv.config({ path: envPath });
 
+// --- TEMPORARY DEBUG ---
+console.log("=== BRAINROT CONFIG DEBUG ===");
+console.log("ENV FILE PATH:", envPath);
+console.log("DOTENV ERROR:", result.error ?? "none");
+console.log("BRAINROT_API_KEY:", process.env.BRAINROT_API_KEY ?? "NOT FOUND");
+console.log("=============================");
+// -----------------------
 function require_env(key: string): string {
   const val = process.env[key];
   if (!val) throw new Error(`Missing required environment variable: ${key}`);
