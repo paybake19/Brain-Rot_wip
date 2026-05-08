@@ -28,7 +28,7 @@
     --accent:   255 0 255;        /* Pure Magenta */
     --accent-2: 0 255 255;        /* Pure Cyan */
     --accent-3: 150 255 0;        /* Pure Yellow */
-    --accent-4: 100 0 250;          /* Pure Lime Green */
+    --accent-4: 100 0 250;        /* Pure Lime Green */
 
     --font-main: "Georgia", serif;
     --border-radius: 24px;
@@ -252,21 +252,35 @@
   100% { filter: hue-rotate(360deg); }
 }
 
-/* Panel breathing - physically distorts scale and shadow */
+/* Organic Panel Wobble - Replaces psych-breathe-panel */
 @keyframes psych-breathe-panel {
   0%, 100% {
-    transform: scale(1);
-    box-shadow: 0 0 30px rgb(var(--accent) / 0.4), inset 0 0 20px rgb(var(--accent-3) / 0.3);
+    /* Subtle distortion: slightly flattens/rounds different corners */
+    border-radius: 24px 28px 22px 26px;
+    /* Glow leans bottom-right */
+    box-shadow:
+      4px 4px 30px rgb(var(--accent) / 0.4),
+      inset -4px -4px 20px rgb(var(--accent-3) / 0.3);
   }
-  50% {
-    transform: scale(1.02);
-    box-shadow: 0 0 60px rgb(var(--accent-2) / 0.6), inset 0 0 50px rgb(var(--accent-4) / 0.5);
+  33% {
+    border-radius: 28px 22px 26px 24px;
+    /* Glow slithers to top-left */
+    box-shadow:
+      -6px -2px 40px rgb(var(--accent-2) / 0.5),
+      inset 4px 2px 30px rgb(var(--accent-4) / 0.4);
+  }
+  66% {
+    border-radius: 22px 30px 24px 22px;
+    /* Glow slithers to top-right */
+    box-shadow:
+      2px -6px 35px rgb(var(--accent-4) / 0.5),
+      inset -2px 4px 25px rgb(var(--accent) / 0.4);
   }
 }
 
 /* OVERRIDING BOOTSCREEN ANIMATIONS
-  These are explicitly called in BootScreen.tsx. We are hijacking them
-  to create an aggressive, full-spectrum shifting fractal effect.
+   These are explicitly called in BootScreen.tsx. We are hijacking them
+   to create an aggressive, full-spectrum shifting fractal effect.
 */
 
 /* Transforms the background tunnel into a shifting, high-contrast kaleidoscope */
@@ -298,6 +312,29 @@
   100% { transform: translate(0, 0) scale(1); filter: hue-rotate(360deg); }
 }
 
+/* NEW: The Deep Abyss Ring */
+.psych-abyss-ring {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0; /* Fills its relative parent */
+  border: 2px solid rgba(var(--accent-3) / 0.3);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 0 20px rgba(var(--accent-4) / 0.2),
+    0 0 30px rgba(var(--accent) / 0.2);
+  /* Counter-spin creates interference with the main slow-rotate */
+  animation: counter-spin 18s linear infinite, rainbow-shift 10s linear infinite;
+  /* Crucial: mathematically blends overlapping borders into bright nodes */
+  mix-blend-mode: screen;
+  pointer-events: none; /* So it doesn't block clicks */
+}
+
+/* Backward rotation and inverted scale schedule */
+@keyframes counter-spin {
+  0% { transform: scale(0.85) rotate(360deg); }
+  50% { transform: scale(1.05) rotate(180deg); }
+  100% { transform: scale(0.85) rotate(0deg); }
+}
+
 /* General Utilities */
 @keyframes drift {
   0%   { transform: translate(0px, 0px) scale(1); filter: blur(40px); }
@@ -311,37 +348,75 @@
 
 /* Target the Left Sidebar */
 [data-theme="psychedelic"] aside:first-of-type {
-  /* Anchor to the left wall so it breathes inward */
   transform-origin: left center;
   animation: psych-layout-breathe 7s ease-in-out infinite, rainbow-shift 15s linear infinite;
+  will-change: transform, box-shadow, backdrop-filter; /* Hardware acceleration */
 }
 
 /* Target the Right Panel */
 [data-theme="psychedelic"] aside:last-of-type {
-  /* Anchor to the right wall so it breathes inward */
   transform-origin: right center;
-  /* Slightly different timing so the breathing feels organic, not robotic */
   animation: psych-layout-breathe 9s ease-in-out infinite, rainbow-shift 12s linear infinite;
+  will-change: transform, box-shadow, backdrop-filter; /* Hardware acceleration */
 }
 
-/* The Layout Breathing Engine */
+/* The Layout Liquid Engine (Tamed "Smoked Glass" sidebars) */
 @keyframes psych-layout-breathe {
-  0%, 80% {
-    /* Resting state */
-    transform: scaleX(1);
+  0%, 100% {
+    /* Uses your variables safely. Toned down opacity to absorb light. */
+    background: rgba(var(--panel) / 0.2);
+    backdrop-filter: blur(16px) saturate(100%);
+    /* Very tight, subtle inner glows instead of massive outer bleeds */
     box-shadow:
-      inset 0 0 20px rgb(var(--accent-3) / 0.1),
-      0 0 15px rgb(var(--accent) / 0.1);
-    background: rgba(var(--panel) / 0.4);
-    backdrop-filter: blur(12px) saturate(150%);
+      1px 1px 10px rgba(var(--bg) / 0.8),
+      inset -1px -1px 8px rgba(var(--accent) / 0.15);
   }
   50% {
-    /* Inhale / Expansion: The panels physically stretch inward by 3% */
-    transform: scaleX(1.03);
+    background: rgba(var(--panel) / 0.35);
+    backdrop-filter: blur(20px) saturate(110%);
     box-shadow:
-      inset 0 0 50px rgb(var(--accent-2) / 0.3),
-      0 0 40px rgb(var(--accent-4) / 0.3);
-    background: rgba(var(--panel) / 0.6);
-    backdrop-filter: blur(16px) saturate(250%);
+      -1px -1px 15px rgba(var(--bg) / 0.9),
+      inset 1px 1px 12px rgba(var(--accent-2) / 0.2);
   }
+}
+
+/* =========================
+   🔧 SVG BOUNDING BOX FIX
+   Forces SVGs to use path-tracing drop-shadows instead of box-shadows
+========================= */
+
+/* 1. Strip box-shadow from ALL SVGs universally, beating the psychedelic theme */
+svg,
+svg.glow-neon,
+[data-theme="psychedelic"] svg.glow-neon,
+[data-theme="psychedelic"] svg.hover-glow {
+  box-shadow: none !important;
+}
+
+/* 2. Re-apply vector drop-shadows to the SVGs */
+svg.glow-neon {
+  filter: drop-shadow(0 0 6px rgb(var(--accent) / 0.6))
+          drop-shadow(0 0 15px rgb(var(--accent) / 0.3)) !important;
+}
+
+[data-theme="psychedelic"] svg.glow-neon {
+  filter: drop-shadow(0 0 15px rgb(var(--accent) / 0.8))
+          drop-shadow(0 0 30px rgb(var(--accent-2) / 0.6)) !important;
+}
+
+/* 3. Fix the Topbar text/logo wrapper.
+   It's a flex-div with .hover-glow, making a harsh rectangular shadow. */
+header .hover-glow:hover {
+  box-shadow: none !important; /* Kill the ugly rectangle on the wrapper */
+}
+
+/* Make the SVG and Text glow independently when hovering that topbar container */
+header .hover-glow:hover > svg {
+  filter: drop-shadow(0 0 10px rgb(var(--accent))) !important;
+  transform: scale(1.05);
+  transition: all 0.3s ease;
+}
+header .hover-glow:hover > span {
+  text-shadow: 0 0 12px rgb(var(--accent));
+  transition: all 0.3s ease;
 }

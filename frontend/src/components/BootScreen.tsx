@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, KeyboardEvent } from 'react'
 
 const QUICK_ACTIONS = ['Research', 'Code', 'Write', 'Analyze']
 const TOOL_PILLS = ['Web Search', 'Deep Research', 'File Analysis', 'Codebase Scan']
@@ -11,7 +11,6 @@ const BrainIcon = ({ size = 32 }: { size?: number }) => (
   </svg>
 )
 
-// Redesigned Eye: More compact, perfectly centered, explicit transparent fills
 const EyeIcon = ({ size = 32 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className="psych-glow-neon transition-all duration-700 overflow-visible">
     <path d="M12 6.5C8 6.5 4 12 4 12s4 5.5 8 5.5 8-5.5 8-5.5-4-5.5-8-5.5z" stroke="rgb(var(--accent))" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="transparent" />
@@ -22,9 +21,26 @@ const EyeIcon = ({ size = 32 }: { size?: number }) => (
 
 type Props = {
   theme: 'default' | 'psychedelic'
+  onSubmit: (text: string) => void
 }
 
-export default function BootScreen({ theme }: Props) {
+export default function BootScreen({ theme, onSubmit }: Props) {
+  const [value, setValue] = useState('')
+
+  const handleSubmit = () => {
+    const trimmed = value.trim()
+    if (!trimmed || typeof onSubmit !== 'function') return
+    onSubmit(trimmed)
+    setValue('')
+  }
+
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSubmit()
+    }
+  }
+
   return (
     <div className="absolute inset-0 flex flex-col items-center justify-center select-none overflow-hidden">
 
@@ -38,9 +54,7 @@ export default function BootScreen({ theme }: Props) {
             <div className="absolute inset-0 blur-[120px] opacity-25" style={{ background: 'radial-gradient(circle at 35% 35%, rgb(var(--accent)), transparent 55%)' }} />
             <div className="absolute inset-0 blur-[120px] opacity-25" style={{ background: 'radial-gradient(circle at 65% 65%, rgb(var(--accent-2)), transparent 55%)' }} />
           </div>
-
           <div className="absolute inset-0 opacity-[0.12] animate-[breathe_18s_ease-in-out_infinite]" style={{ background: `repeating-radial-gradient(circle at center, transparent 0, transparent 75px, rgb(var(--accent-3) / 0.15) 78px, transparent 82px)` }} />
-
           <div className="absolute inset-0 opacity-[0.08] animate-[slow-rotate_80s_linear_infinite]">
             <svg width="100%" height="100%">
               <defs>
@@ -60,21 +74,16 @@ export default function BootScreen({ theme }: Props) {
               <rect width="100%" height="100%" fill="url(#mandalaPattern)" />
             </svg>
           </div>
-
           <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at center, transparent 30%, rgb(var(--bg)) 100%)' }} />
         </div>
       )}
 
       {/* 3. MAIN CONTENT */}
       <div className="relative z-10 flex flex-col items-center w-full">
-
         <div className="mb-8 w-18 h-18 rounded-full flex items-center justify-center relative glass-strong glow-neon transition-all duration-700">
           <div className="absolute rounded-full animate-pulse border border-dashed border-[rgb(var(--accent)/0.2)]" style={{ width: '135%', height: '135%' }} />
           <div className="absolute rounded-full opacity-30 border border-dotted border-[rgb(var(--accent)/0.15)]" style={{ width: '190%', height: '190%' }} />
-
-          {/* THE ICON SWAP */}
           {theme === 'psychedelic' ? <EyeIcon size={34} /> : <BrainIcon size={34} />}
-
         </div>
 
         <h1 className="text-[34px] font-serif mb-2 text-center text-neon transition-colors duration-700 tracking-tight">
@@ -86,15 +95,30 @@ export default function BootScreen({ theme }: Props) {
 
         <div className="w-full max-w-2xl px-6">
           <div className="rounded-3xl p-5 mb-6 transition-all duration-700 glass-strong glow-neon focus-within:shadow-[0_0_40px_rgb(var(--accent)/0.15)]">
-            <input className="input text-[16px] mb-5 font-light" placeholder="Ask anything or spawn an agent..." />
+            <input
+              value={value}
+              onChange={(e) => setValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="input text-[16px] mb-5 font-light"
+              placeholder="Ask anything or spawn an agent..."
+              autoComplete="off"
+            />
 
             <div className="flex items-center gap-2.5 flex-wrap">
               {QUICK_ACTIONS.map(label => (
-                <button key={label} className="btn glass hover-glow py-1.5 px-3.5 rounded-xl text-[11px] border-[rgb(var(--text)/0.05)]">
+                <button
+                  key={label}
+                  onClick={() => onSubmit(label)}
+                  className="btn glass hover-glow py-1.5 px-3.5 rounded-xl text-[11px] border-[rgb(var(--text)/0.05)]"
+                >
                   {label}
                 </button>
               ))}
-              <button className="ml-auto w-9 h-9 flex items-center justify-center rounded-xl btn-accent hover-glow text-lg">
+              <button
+                onClick={handleSubmit}
+                disabled={!value.trim()}
+                className="ml-auto w-9 h-9 flex items-center justify-center rounded-xl btn-accent hover-glow text-lg"
+              >
                 ↵
               </button>
             </div>

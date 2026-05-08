@@ -3,14 +3,13 @@ import Topbar from './Topbar'
 import Sidebar from './Sidebar'
 import RightPanel from './RightPanel'
 import StatusBar from './StatusBar'
-import BootScreen from '../BootScreen'
 import WindowManager from '../WindowManager'
+import ChatWindow from '../chat/ChatWindow'
 
 export default function AppLayout() {
   const [tilingEnabled, setTilingEnabled] = useState(false)
   const [theme, setTheme] = useState<'default' | 'psychedelic'>('default')
 
-  // Theme is controlled ONLY via data-theme on <html>.
   useEffect(() => {
     const root = document.documentElement
     if (theme === 'default') {
@@ -37,7 +36,7 @@ export default function AppLayout() {
         <Sidebar />
 
         <main className="flex-1 relative overflow-hidden bg-dot-pattern flex flex-col">
-          {tilingEnabled ? <WindowManager /> : <BootScreen theme={theme} />}
+          {tilingEnabled ? <WindowManager /> : <ChatWindow theme={theme} />}
         </main>
 
         <RightPanel />

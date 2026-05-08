@@ -3,87 +3,90 @@ import { useChatStore } from "../store/chat.store";
 import { streamChat, type ApiMessage } from "../api/chat.api";
 
 export function useChat() {
-  const store = useChatStore();
-  const abortRef = useRef<AbortController | null>(null);
+  const messages       = useChatStore((s) => s.messages);
+  const isStreaming    = useChatStore((s) => s.isStreaming);
+  const activeToolCall = useChatStore((s) => s.activeToolCall);
+
+  const addMessage      = useChatStore((s) => s.addMessage);
+  const appendToken     = useChatStore((s) => s.appendToken);
+  const finalizeMessage = useChatStore((s) => s.finalizeMessage);
+  const setStreaming     = useChatStore((s) => s.setStreaming);
+  const setActiveToolCall = useChatStore((s) => s.setActiveToolCall);
+  const setMessageError = useChatStore((s) => s.setMessageError);
+  const pushToolCall    = useChatStore((s) => s.pushToolCall);
+  const clearMessages   = useChatStore((s) => s.clearMessages);
+
+  const abortRef     = useRef<AbortController | null>(null);
+  const sessionIdRef = useRef(crypto.randomUUID());
 
   const sendMessage = useCallback(
     async (content: string, imageBase64?: string) => {
-      if (store.isStreaming) return;
+      console.log("🔥 sendMessage triggered:", content);
 
-      // 1. Add user message to store
-      store.addMessage({ role: "user", content });
+      // Read isStreaming directly from store to avoid stale closure
+      if (useChatStore.getState().isStreaming) return;
 
-      // 2. Create a blank streaming assistant message
-      const assistantId = store.addMessage({
+      addMessage({ role: "user", content });
+
+      const assistantId = addMessage({
         role: "assistant",
         content: "",
         isStreaming: true,
       });
 
-      store.setStreaming(true);
+      setStreaming(true);
 
-      // 3. Build message history for API (exclude the blank assistant msg)
       const history: ApiMessage[] = useChatStore
         .getState()
-        .messages.filter((m) => m.id !== assistantId)
-        .map((m) => ({ role: m.role, content: m.content }));
+        .messages
+        .filter((m) => m.id !== assistantId)
+        .map(({ id, role, content, timestamp }) => ({ id, role, content, timestamp }));
 
-      // 4. Create abort controller so user can cancel mid-stream
       abortRef.current = new AbortController();
 
       try {
-        const stream = await streamChat(history, imageBase64, abortRef.current.signal);
+        const stream = await streamChat(
+          history,
+          sessionIdRef.current,
+          imageBase64,
+          abortRef.current.signal
+        );
 
         for await (const chunk of stream) {
           switch (chunk.type) {
             case "token":
-              store.appendToken(assistantId, chunk.content);
+              appendToken(assistantId, chunk.content);
               break;
 
-            case "tool_call": {
-              // Parse the tool call payload sent by the backend
+            case "tool_call":
               try {
-                const parsed = JSON.parse(chunk.content) as {
-                  name: string;
-                  args: Record<string, unknown>;
-                };
-                store.pushToolCall(assistantId, {
-                  name: parsed.name,
-                  args: parsed.args,
-                });
-                store.setActiveToolCall(parsed.name);
-              } catch {
-                // malformed tool_call chunk — skip
+                const parsed = JSON.parse(chunk.content);
+                pushToolCall(assistantId, { name: parsed.name, args: parsed.args });
+                setActiveToolCall(parsed.name);
+              } catch (err) {
+                console.error("Tool parse error:", err);
               }
               break;
-            }
 
             case "done":
-              store.setActiveToolCall(null);
-              store.finalizeMessage(assistantId);
-              store.setStreaming(false);
+              finalizeMessage(assistantId);
               break;
 
             case "error":
-              store.setMessageError(assistantId, chunk.content);
-              store.setActiveToolCall(null);
-              store.setStreaming(false);
+              setMessageError(assistantId, chunk.content);
               break;
           }
         }
-      } catch (err: unknown) {
-        // Ignore abort — that's intentional cancellation
-        if (err instanceof Error && err.name === "AbortError") {
-          store.finalizeMessage(assistantId);
-        } else {
-          const msg = err instanceof Error ? err.message : "Unknown error";
-          store.setMessageError(assistantId, msg);
-        }
-        store.setActiveToolCall(null);
-        store.setStreaming(false);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Unknown error";
+        console.error("Streaming error:", err);
+        setMessageError(assistantId, msg);
+      } finally {
+        setActiveToolCall(null);
+        setStreaming(false);
       }
     },
-    [store]
+    [addMessage, appendToken, finalizeMessage, setStreaming, setActiveToolCall, setMessageError, pushToolCall]
   );
 
   const cancelStream = useCallback(() => {
@@ -91,11 +94,11 @@ export function useChat() {
   }, []);
 
   return {
-    messages: store.messages,
-    isStreaming: store.isStreaming,
-    activeToolCall: store.activeToolCall,
+    messages,
+    isStreaming,
+    activeToolCall,
     sendMessage,
     cancelStream,
-    clearMessages: store.clearMessages,
+    clearMessages,
   };
 }

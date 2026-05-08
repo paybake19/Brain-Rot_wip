@@ -5,28 +5,30 @@ import Message from './Message'
 import StreamToken from './StreamToken'
 import ToolCallBadge from './ToolCallBadge'
 import TypingIndicator from './TypingIndicator'
+import BootScreen from '../BootScreen'
 
-export default function ChatWindow() {
+type Props = {
+  theme: 'default' | 'psychedelic'
+}
+
+export default function ChatWindow({ theme }: Props) {
   const { messages, isStreaming, activeToolCall, sendMessage, cancelStream } = useChat()
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll on new messages or tokens
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  if (messages.length === 0) {
+    return <BootScreen theme={theme} onSubmit={sendMessage} />
+  }
 
   return (
     <div
       className="flex flex-col h-full transition-colors duration-700"
       style={{ background: 'rgb(var(--bg) / 0.3)' }}
     >
-      {/* Message list */}
       <div className="flex-1 overflow-y-auto p-3 space-y-2.5">
-
-        {messages.length === 0 && (
-          <Message role="assistant" content="Welcome to Brain Rot." />
-        )}
-
         {messages.map((msg) => (
           <div key={msg.id}>
             {msg.toolCalls?.map((tc, i) => (
@@ -61,7 +63,6 @@ export default function ChatWindow() {
         <div ref={bottomRef} />
       </div>
 
-      {/* Input area */}
       <div
         className="border-t p-2 transition-colors duration-700"
         style={{ borderColor: 'rgb(var(--text) / 0.06)' }}
