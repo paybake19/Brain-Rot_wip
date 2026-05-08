@@ -85,7 +85,7 @@ export default function Sidebar() {
 
       <div className="border-t border-[rgb(var(--text)/0.04)] px-3 py-3 flex items-center justify-around shrink-0">
         {NAV_ICONS.map((icon, i) => (
-          <button key={i} className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--text)/0.3)] btn hover-glow transition-colors duration-200 !border-transparent">
+          <button key={i} className="w-8 h-8 flex items-center justify-center rounded-lg text-[rgb(var(--text)/0.3)] btn hover-glow transition-colors duration-200 border-transparent">
             {icon}
           </button>
         ))}

@@ -50,7 +50,7 @@ export default function RightPanel() {
         <span className="text-[10px] font-semibold text-[rgb(var(--text)/0.4)] uppercase tracking-widest">
           Active Tasks
         </span>
-        <button className="btn hover-glow !py-1 !px-2 text-[10px]">
+        <button className="btn hover-glow py-1 px-2 text-[10px]">
           View All
         </button>
       </div>
@@ -90,7 +90,7 @@ export default function RightPanel() {
                 ~/Brain/R0t/
               </div>
             </div>
-            <button className="btn hover-glow !py-1.5 !px-2 text-[10px]">
+            <button className="btn hover-glow py-1.5 px-2 text-[10px]">
               Change
             </button>
           </div>
@@ -123,7 +123,7 @@ export default function RightPanel() {
               </svg>
               Sync Now
             </button>
-            <button className="w-9 h-9 btn hover-glow flex items-center justify-center !p-0">
+            <button className="w-9 h-9 btn hover-glow flex items-center justify-center p-0">
               <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
                 <circle cx="6" cy="6" r="4.5" stroke="currentColor" strokeWidth="1.2"/>
                 <circle cx="6" cy="6" r="1.5" stroke="currentColor" strokeWidth="1.2"/>

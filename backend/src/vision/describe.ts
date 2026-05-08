@@ -1,7 +1,16 @@
 import { ollamaService } from "../services/ollama.service";
-import { buildVisionPrompt } from "../llm/prompts/vision.prompt";
+import { logger } from "../services/logger.service";
 
-export async function describeImage(imageBuffer: Buffer): Promise<string> {
-  const base64 = imageBuffer.toString("base64");
-  return ollamaService.generate(buildVisionPrompt(), base64);
+export async function describeImage(image: Buffer): Promise<string> {
+  try {
+    const base64 = image.toString("base64");
+    const description = await ollamaService.generate(
+      "Describe what you see in this image in detail.",
+      base64
+    );
+    return description;
+  } catch (err: any) {
+    logger.error("describeImage failed", { error: err.message });
+    throw err;
+  }
 }

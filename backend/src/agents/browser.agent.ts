@@ -1,6 +1,6 @@
 import { ollamaService } from "../services/ollama.service";
 import { navigate, clickElement, fillInput } from "../browser/actions";
-//import { scrapePage } from "../browser/scraper";
+import { scrapePage } from "../browser/scraper";
 import { logger } from "../services/logger.service";
 
 const MAX_STEPS = 10;

@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.browserAgent = exports.BrowserAgent = void 0;
 const ollama_service_1 = require("../services/ollama.service");
 const actions_1 = require("../browser/actions");
-//import { scrapePage } from "../browser/scraper";
+const scraper_1 = require("../browser/scraper");
 const logger_service_1 = require("../services/logger.service");
 const MAX_STEPS = 10;
 class BrowserAgent {
@@ -44,7 +44,7 @@ If the task is complete or you have enough information, use action "done".`;
                     if (!action.url)
                         break;
                     await (0, actions_1.navigate)(action.url);
-                    const { text } = await scrapePage();
+                    const { text } = await (0, scraper_1.scrapePage)();
                     pageContext = text;
                     break;
                 }
@@ -52,7 +52,7 @@ If the task is complete or you have enough information, use action "done".`;
                     if (!action.selector)
                         break;
                     await (0, actions_1.clickElement)(action.selector);
-                    const { text } = await scrapePage();
+                    const { text } = await (0, scraper_1.scrapePage)();
                     pageContext = text;
                     break;
                 }
@@ -63,7 +63,7 @@ If the task is complete or you have enough information, use action "done".`;
                     break;
                 }
                 case "scrape": {
-                    const { text, links } = await scrapePage();
+                    const { text, links } = await (0, scraper_1.scrapePage)();
                     pageContext = text;
                     finalResult = `${text.slice(0, 3000)}\n\nLinks:\n${links.slice(0, 10).join("\n")}`;
                     break;

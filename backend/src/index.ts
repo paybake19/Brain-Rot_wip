@@ -9,11 +9,11 @@ import chatRouter from "./routes/chat.route";
 import vaultRouter from "./routes/vault.route";
 import toolsRouter from "./routes/tools.route";
 import sttRouter from "./routes/stt.route";
-//import ttsRouter from "./routes/tts.route";
+import ttsRouter from "./routes/tts.route";
 import visionRouter from "./routes/vision.route";
 import browserRouter from "./routes/browser.route";
 import systemRouter from "./routes/system.route";
-// import calendarRouter from "./routes/calendar.route";
+//import calendarRouter from "./routes/calendar.route";
 
 // --- Middleware Imports ---
 import { authMiddleware } from "./middleware/auth.middleware";

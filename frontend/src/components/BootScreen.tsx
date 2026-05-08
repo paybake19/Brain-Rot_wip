@@ -68,7 +68,7 @@ export default function BootScreen({ theme }: Props) {
       {/* 3. MAIN CONTENT */}
       <div className="relative z-10 flex flex-col items-center w-full">
 
-        <div className="mb-8 w-[72px] h-[72px] rounded-full flex items-center justify-center relative glass-strong glow-neon transition-all duration-700">
+        <div className="mb-8 w-18 h-18 rounded-full flex items-center justify-center relative glass-strong glow-neon transition-all duration-700">
           <div className="absolute rounded-full animate-pulse border border-dashed border-[rgb(var(--accent)/0.2)]" style={{ width: '135%', height: '135%' }} />
           <div className="absolute rounded-full opacity-30 border border-dotted border-[rgb(var(--accent)/0.15)]" style={{ width: '190%', height: '190%' }} />
 
@@ -90,7 +90,7 @@ export default function BootScreen({ theme }: Props) {
 
             <div className="flex items-center gap-2.5 flex-wrap">
               {QUICK_ACTIONS.map(label => (
-                <button key={label} className="btn glass hover-glow !py-1.5 px-3.5 !rounded-xl text-[11px] border-[rgb(var(--text)/0.05)]">
+                <button key={label} className="btn glass hover-glow py-1.5 px-3.5 rounded-xl text-[11px] border-[rgb(var(--text)/0.05)]">
                   {label}
                 </button>
               ))}

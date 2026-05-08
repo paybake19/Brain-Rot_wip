@@ -6,7 +6,7 @@ let db: any = null;
 let table: any = null;
 
 export async function initVectorStore(): Promise<void> {
-  const lancedb = await import("vectordb");
+  const lancedb = await import("@lancedb/lancedb");
   db = await lancedb.connect(paths.lancedb);
 
   const tableNames: string[] = await db.tableNames();
