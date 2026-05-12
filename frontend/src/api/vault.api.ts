@@ -44,7 +44,7 @@ export interface VaultSearchResult {
  */
 export async function readNote(notePath: string): Promise<VaultNote> {
   return vaultFetch<VaultNote>(
-    `${BASE}/api/v1/vault/note?path=${encodeURIComponent(notePath)}`
+    `${BASE}/api/vault/note?path=${encodeURIComponent(notePath)}`
   )
 }
 
@@ -53,7 +53,7 @@ export async function readNote(notePath: string): Promise<VaultNote> {
  */
 export async function listNotes(folder = ''): Promise<string[]> {
   const data = await vaultFetch<{ files: string[] }>(
-    `${BASE}/api/v1/vault/list?folder=${encodeURIComponent(folder)}`
+    `${BASE}/api/vault/list?folder=${encodeURIComponent(folder)}`
   )
   return data.files
 }
@@ -66,7 +66,7 @@ export async function searchVault(
 ): Promise<VaultSearchResult[]> {
   if (!query.trim()) return []
   const data = await vaultFetch<{ results: VaultSearchResult[] }>(
-    `${BASE}/api/v1/vault/search?q=${encodeURIComponent(query)}`
+    `${BASE}/api/vault/search?q=${encodeURIComponent(query)}`
   )
   return data.results
 }

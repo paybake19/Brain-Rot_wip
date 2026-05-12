@@ -1,3 +1,5 @@
+import { useVault } from '../../hooks/useVault'
+
 const TASKS = [
   { id: 1, title: 'Research LLM memory techniques', agent: 'Orion', status: 'active',  pct: 62 },
   { id: 2, title: 'Analyze codebase structure',     agent: 'Nyx',   status: 'active',  pct: 38 },
@@ -6,12 +8,14 @@ const TASKS = [
   { id: 5, title: 'Organize meeting notes',         agent: 'Echo',  status: 'waiting', pct: 0  },
 ]
 
-const VAULT_STATS = [['Notes', '1,248'], ['Files', '2,531'], ['Folders', '142']]
-const VAULT_META  = [
-  ['Attachments', '1.2 GB', ''],
-  ['Daily Sync',  '21m ago', ''],
-  ['Status',      'Healthy',  'accent'],
-]
+function deriveFolderCount(notes: string[]): number {
+  const folders = new Set<string>()
+  for (const n of notes) {
+    const dir = n.includes('/') ? n.substring(0, n.lastIndexOf('/')) : ''
+    if (dir) folders.add(dir)
+  }
+  return folders.size
+}
 
 function TaskRow({ title, agent, status, pct }: typeof TASKS[0]) {
   return (
@@ -43,6 +47,16 @@ function TaskRow({ title, agent, status, pct }: typeof TASKS[0]) {
 }
 
 export default function RightPanel() {
+  const vault = useVault()
+  const connected = vault.error === null && !vault.isLoading
+  const folderCount = deriveFolderCount(vault.notes)
+
+  const vaultMeta: [string, string, string][] = [
+    ['Notes', vault.isLoading ? '…' : String(vault.noteCount), ''],
+    ['Folders', vault.isLoading ? '…' : String(folderCount), ''],
+    ['Status', connected ? 'Connected' : vault.isLoading ? 'Loading…' : 'Offline', connected ? 'accent' : ''],
+  ]
+
   return (
     <aside className="w-[320px] shrink-0 flex flex-col border-l border-[rgb(var(--text)/0.04)] glass overflow-hidden transition-colors duration-700 z-40">
 
@@ -64,9 +78,16 @@ export default function RightPanel() {
           <span className="text-[10px] font-semibold text-[rgb(var(--text)/0.4)] uppercase tracking-widest">
             Vault Status
           </span>
-          <div className="flex items-center gap-1.5 text-[10px] text-[rgb(var(--accent))] font-medium transition-colors duration-700">
-            <div className="w-1.5 h-1.5 rounded-full bg-[rgb(var(--accent))] shadow-[0_0_6px_rgb(var(--accent)/0.6)] animate-pulse" />
-            Connected
+          <div className="flex items-center gap-1.5 text-[10px] font-medium transition-colors duration-700"
+               style={{ color: connected ? 'rgb(var(--accent))' : 'rgb(var(--text) / 0.4)' }}>
+            <div className={`w-1.5 h-1.5 rounded-full transition-all duration-700 ${
+              vault.isLoading
+                ? 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)] animate-pulse'
+                : connected
+                  ? 'bg-[rgb(var(--accent))] shadow-[0_0_6px_rgb(var(--accent)/0.6)] animate-pulse'
+                  : 'bg-red-400'
+            }`} />
+            {vault.isLoading ? 'Connecting…' : connected ? 'Connected' : 'Offline'}
             <span className="text-[rgb(var(--accent)/0.5)] ml-0.5">▾</span>
           </div>
         </div>
@@ -96,32 +117,34 @@ export default function RightPanel() {
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center mb-3">
-            {VAULT_STATS.map(([l, v]) => (
+            {vaultMeta.map(([l, v, c]) => (
               <div key={l} className="glass rounded-lg py-2 transition-all hover-glow">
                 <div className="text-[9px] text-[rgb(var(--text)/0.4)] mb-1">{l}</div>
-                <div className="text-[13px] font-semibold text-[rgb(var(--text)/0.85)]">{v}</div>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 text-center mb-4">
-            {VAULT_META.map(([l, v, c]) => (
-              <div key={l}>
-                <div className="text-[9px] text-[rgb(var(--text)/0.4)] mb-1">{l}</div>
-                <div className="text-[11px] font-medium transition-colors duration-700" style={{ color: c === 'accent' ? 'rgb(var(--accent))' : 'rgb(var(--text) / 0.6)' }}>
+                <div className="text-[13px] font-semibold transition-colors duration-700"
+                     style={{ color: c === 'accent' ? 'rgb(var(--accent))' : 'rgb(var(--text) / 0.85)' }}>
                   {v}
                 </div>
               </div>
             ))}
           </div>
 
+          {vault.error && (
+            <div className="text-[10px] text-red-400/70 mb-3 text-center">
+              {vault.error}
+            </div>
+          )}
+
           <div className="flex gap-2">
-            <button className="flex-1 btn btn-accent hover-glow py-2">
-              <svg width="12" height="12" viewBox="0 0 11 11" fill="none" className="mr-1.5">
+            <button
+              className="flex-1 btn btn-accent hover-glow py-2"
+              onClick={() => vault.refreshNotes()}
+              disabled={vault.isLoading}
+            >
+              <svg width="12" height="12" viewBox="0 0 11 11" fill="none" className={`mr-1.5 ${vault.isLoading ? 'animate-spin' : ''}`}>
                 <path d="M9.5 5.5a4 4 0 11-1.2-2.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                 <path d="M9.5 2v3.5H6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              Sync Now
+              {vault.isLoading ? 'Syncing…' : 'Sync Now'}
             </button>
             <button className="w-9 h-9 btn hover-glow flex items-center justify-center p-0">
               <svg width="14" height="14" viewBox="0 0 12 12" fill="none">
