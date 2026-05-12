@@ -12,7 +12,11 @@ type Win = {
 
 type SnapZone = "left" | "right" | "top" | "fullscreen" | null
 
-export default function WindowManager() {
+type Props = {
+  theme: 'default' | 'psychedelic'
+}
+
+export default function WindowManager({ theme }: Props) {
   const [windows, setWindows] = useState<Win[]>([
     { id: 1, type: "chat", x: 260, y: 140, w: 520, h: 420 }
   ])
@@ -162,7 +166,7 @@ export default function WindowManager() {
 
           {/* CONTENT */}
           <div className="h-[calc(100%-32px)] overflow-auto">
-            <ChatWindow />
+            <ChatWindow theme={theme} />
           </div>
 
           {/* RESIZE HANDLE (visual only for now) */}

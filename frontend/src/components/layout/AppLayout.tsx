@@ -36,7 +36,7 @@ export default function AppLayout() {
         <Sidebar />
 
         <main className="flex-1 relative overflow-hidden bg-dot-pattern flex flex-col">
-          {tilingEnabled ? <WindowManager /> : <ChatWindow theme={theme} />}
+          {tilingEnabled ? <WindowManager theme={theme} /> : <ChatWindow theme={theme} />}
         </main>
 
         <RightPanel />
