@@ -222,7 +222,463 @@ TBD
 
 ## 👁️ Final Note
 
-This isn’t just a UI.
+This isn't just a UI.
 
-It’s the beginning of a **personal intelligence layer**.
+It's the beginning of a **personal intelligence layer**.
+
+---
+
+## 📋 Next Session: Implementation Plan
+
+> Generated: 2026-05-12 | Session scope: DeepSeek API, Multi-Agent System, Sidebar Wiring
+
+### What was completed this session
+
+- ✅ Fixed `vault.api.ts` URLs (`/api/v1/vault` → `/api/vault`) to match backend routes
+- ✅ Implemented `frontend/src/hooks/useVault.ts` (was empty) — live vault data fetching
+- ✅ Wired `RightPanel.tsx` vault section to `useVault` hook — real note counts, connection status, sync button
+- ✅ Fixed TypeScript errors: `theme` prop threaded through `AppLayout` → `WindowManager` → `ChatWindow`
+- ✅ Removed Windows-only `@rolldown/binding-win32-x64-msvc` from `package.json` (re-add when back on Windows)
+- ✅ Designed agent pipeline (Chad → Kyle → Karen, orchestrated by Brody)
+- ✅ Designed LLM routing (DeepSeek primary → Ollama fallback)
+
+---
+
+### Phase 1: DeepSeek API Service + Ollama Fallback
+
+#### 1a. Add DeepSeek config to `backend/src/config/index.ts`
+
+Add to the `config` object inside `require_env` / env reads:
+
+```ts
+deepseek: {
+  apiKey: require_env("DEEPSEEK_API_KEY"),
+  model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+  baseUrl: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
+},
+```
+
+Remove the hardcoded console.log debug block at the top of the file.
+
+#### 1b. Create `backend/src/services/deepseek.service.ts`
+
+DeepSeek uses an OpenAI-compatible API. Implement the same interface as `ollama.service.ts`:
+
+```ts
+// Interface to implement:
+export interface LLMService {
+  streamChat(messages: OllamaMessage[]): AsyncGenerator<StreamChunk>;
+  generate(prompt: string, imageBase64?: string): Promise<string>;
+  embed(text: string): Promise<number[]>;  // may throw / fall back to Ollama
+}
+```
+
+Key differences from Ollama:
+
+| Aspect | Ollama | DeepSeek |
+|---|---|---|
+| Endpoint | `POST /api/chat` | `POST /v1/chat/completions` |
+| Auth header | None | `Authorization: Bearer <key>` |
+| Stream format | NDJSON lines `{"message":{"content":"..."}}` | SSE `data: {"choices":[{"delta":{"content":"..."}}]}` |
+| Embeddings | `POST /api/embeddings` | ❌ Not supported — must fall back to Ollama |
+| Tool calling | Manual prompt-based | Native `tools` + `tool_choice` params |
+
+**Stream parsing for DeepSeek SSE:**
+```ts
+// Each SSE line looks like:
+// data: {"id":"...","choices":[{"index":0,"delta":{"content":"Hello"}}]}
+// data: {"id":"...","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}
+// data: [DONE]
+
+const json = JSON.parse(line.slice(6));  // strip "data: "
+const delta = json?.choices?.[0]?.delta;
+if (delta?.content) yield { type: "token", content: delta.content };
+if (json?.choices?.[0]?.finish_reason) yield { type: "done", content: "" };
+```
+
+**`embed()` should throw** so the fallback kicks in. DeepSeek has no embedding endpoint.
+
+#### 1c. Create `backend/src/services/llm.service.ts` (Facade)
+
+This is the router that tries DeepSeek first, falls back to Ollama:
+
+```ts
+import { deepseekService } from "./deepseek.service";
+import { ollamaService } from "./ollama.service";
+import { logger } from "./logger.service";
+
+export const llmService = {
+  async *streamChat(messages: OllamaMessage[]): AsyncGenerator<StreamChunk> {
+    try {
+      for await (const chunk of deepseekService.streamChat(messages)) {
+        yield chunk;
+      }
+    } catch (err: any) {
+      logger.warn("DeepSeek failed, falling back to Ollama", { error: err.message });
+      for await (const chunk of ollamaService.streamChat(messages)) {
+        yield chunk;
+      }
+    }
+  },
+
+  async generate(prompt: string, imageBase64?: string): Promise<string> {
+    try {
+      return await deepseekService.generate(prompt, imageBase64);
+    } catch {
+      logger.warn("DeepSeek generate failed, falling back to Ollama");
+      return await ollamaService.generate(prompt, imageBase64);
+    }
+  },
+
+  async embed(text: string): Promise<number[]> {
+    // DeepSeek has no embeddings — go straight to Ollama
+    return await ollamaService.embed(text);
+  },
+};
+```
+
+#### 1d. Update `backend/src/routes/chat.route.ts`
+
+Change the import:
+```ts
+// Before:
+import { ollamaService, OllamaMessage } from "../services/ollama.service";
+// After:
+import { llmService } from "../services/llm.service";
+import { OllamaMessage } from "../services/ollama.service";  // keep the type
+```
+
+Replace `ollamaService.streamChat(ollamaMessages)` with `llmService.streamChat(ollamaMessages)`.
+
+#### 1e. Environment variables
+
+Add to `.env`:
+```env
+DEEPSEEK_API_KEY=sk-your-deepseek-api-key
+DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+```
+
+Existing Ollama vars remain unchanged (used as fallback):
+```env
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL_DEFAULT=gemma4:e4b
+OLLAMA_EMBED_MODEL=nomic-embed-text
+```
+
+---
+
+### Phase 2: Agent Store + Sidebar Wiring
+
+#### 2a. Create `frontend/src/store/agent.store.ts`
+
+Zustand store that manages agent definitions, active agent, per-agent conversations, and prompt editing.
+
+```ts
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
+
+export interface AgentDefinition {
+  id: string;           // unique slug, e.g. "chad", "kyle", "custom-1718abcd"
+  name: string;         // display name, e.g. "Chad"
+  initials: string;     // 2-char abbreviation for avatar, e.g. "Ch"
+  emoji: string;        // single emoji for icon, e.g. "⚡"
+  role: string;         // short role description, e.g. "First-Pass Output"
+  systemPrompt: string; // editable system prompt
+  status: "online" | "thinking" | "idle" | "offline";
+  isBuiltIn: boolean;   // true for Chad/Kyle/Karen/Brody, false for custom
+}
+
+// Default built-in agents
+export const BUILT_IN_AGENTS: AgentDefinition[] = [
+  {
+    id: "chad",
+    name: "Chad",
+    initials: "Ch",
+    emoji: "⚡",
+    role: "First-Pass Output",
+    systemPrompt: "You are Chad, the first-pass LLM. You provide quick, direct, and accurate initial responses. Be concise and get straight to the point. When you're uncertain, flag it — Kyle will refine your work.",
+    status: "online",
+    isBuiltIn: true,
+  },
+  {
+    id: "kyle",
+    name: "Kyle",
+    initials: "Ky",
+    emoji: "🔍",
+    role: "Refinement",
+    systemPrompt: "You are Kyle, the refinement agent. You review and polish Chad's initial output. Improve clarity, fix mistakes, add necessary depth and nuance. For complex tasks, your output goes to Karen for final audit.",
+    status: "idle",
+    isBuiltIn: true,
+  },
+  {
+    id: "karen",
+    name: "Karen",
+    initials: "Ka",
+    emoji: "🔒",
+    role: "Code Auditor",
+    systemPrompt: "You are Karen, the code quality auditor. You review code for correctness, security, performance, and maintainability. Nothing ships without your sign-off. Be thorough and uncompromising.",
+    status: "idle",
+    isBuiltIn: true,
+  },
+  {
+    id: "brody",
+    name: "Brody",
+    initials: "Br",
+    emoji: "🧠",
+    role: "Planner / Orchestrator",
+    systemPrompt: "You are Brody, the planner and orchestrator. You decompose complex tasks into sub-tasks and assign them to the right agents. You determine whether a task is simple (Chad handles it alone) or complex (Chad → Kyle → Karen pipeline). Always explain your orchestration plan before delegating.",
+    status: "online",
+    isBuiltIn: true,
+  },
+];
+
+interface AgentStore {
+  agents: AgentDefinition[];
+  activeAgentId: string;
+  conversations: Record<string, ChatMessage[]>;  // per-agent message histories
+
+  // Actions
+  setActiveAgent: (id: string) => void;
+  updateAgentPrompt: (id: string, prompt: string) => void;
+  updateAgentStatus: (id: string, status: AgentDefinition["status"]) => void;
+  addCustomAgent: (agent: Omit<AgentDefinition, "id" | "isBuiltIn" | "status">) => string;
+  removeCustomAgent: (id: string) => void;
+  getAgentMessages: (id: string) => ChatMessage[];
+  addMessageToAgent: (id: string, msg: ChatMessage) => void;
+  clearAgentMessages: (id: string) => void;
+}
+
+export const useAgentStore = create<AgentStore>()(
+  persist(
+    (set, get) => ({
+      agents: BUILT_IN_AGENTS,
+      activeAgentId: "chad",
+      conversations: {},
+
+      setActiveAgent: (id) => set({ activeAgentId: id }),
+
+      updateAgentPrompt: (id, prompt) =>
+        set((s) => ({
+          agents: s.agents.map((a) =>
+            a.id === id ? { ...a, systemPrompt: prompt } : a
+          ),
+        })),
+
+      updateAgentStatus: (id, status) =>
+        set((s) => ({
+          agents: s.agents.map((a) =>
+            a.id === id ? { ...a, status } : a
+          ),
+        })),
+
+      addCustomAgent: (agent) => {
+        const id = `custom-${crypto.randomUUID().slice(0, 8)}`;
+        set((s) => ({
+          agents: [
+            ...s.agents,
+            { ...agent, id, isBuiltIn: false, status: "online" as const },
+          ],
+        }));
+        return id;
+      },
+
+      removeCustomAgent: (id) =>
+        set((s) => ({
+          agents: s.agents.filter((a) => !(a.id === id && !a.isBuiltIn)),
+          activeAgentId:
+            s.activeAgentId === id ? "chad" : s.activeAgentId,
+        })),
+
+      getAgentMessages: (id) => get().conversations[id] ?? [],
+
+      addMessageToAgent: (id, msg) =>
+        set((s) => ({
+          conversations: {
+            ...s.conversations,
+            [id]: [...(s.conversations[id] ?? []), msg],
+          },
+        })),
+
+      clearAgentMessages: (id) =>
+        set((s) => ({
+          conversations: { ...s.conversations, [id]: [] },
+        })),
+    }),
+    { name: "brainrot-agent-store" }
+  )
+);
+```
+
+**Important:** Import the `ChatMessage` type from `chat.store.ts`. You may need to move the type to a shared location or re-export it.
+
+#### 2b. Create `frontend/src/hooks/useAgent.ts`
+
+Hook that wraps `useAgentStore` with convenience methods:
+
+```ts
+import { useAgentStore, type AgentDefinition } from "../store/agent.store";
+import { useChatStore } from "../store/chat.store";
+import { useCallback } from "react";
+
+export function useAgent() {
+  const agents = useAgentStore((s) => s.agents);
+  const activeAgentId = useAgentStore((s) => s.activeAgentId);
+  const activeAgent = agents.find((a) => a.id === activeAgentId) ?? agents[0];
+
+  const setActiveAgent = useAgentStore((s) => s.setActiveAgent);
+  const updatePrompt = useAgentStore((s) => s.updateAgentPrompt);
+  const addCustom = useAgentStore((s) => s.addCustomAgent);
+  const removeCustom = useAgentStore((s) => s.removeCustomAgent);
+  const addMessageToAgent = useAgentStore((s) => s.addMessageToAgent);
+  const clearAgentMessages = useAgentStore((s) => s.clearAgentMessages);
+
+  // Per-agent message history from store
+  const agentMessages = useAgentStore(
+    (s) => s.conversations[activeAgentId] ?? []
+  );
+
+  // Load agent messages into chat.store when switching agents
+  const clearMessages = useChatStore((s) => s.clearMessages);
+  const addMessage = useChatStore((s) => s.addMessage);
+
+  const switchAgent = useCallback(
+    (id: string) => {
+      // Save current chat to old agent, load new agent's chat
+      setActiveAgent(id);
+    },
+    [setActiveAgent]
+  );
+
+  return {
+    agents,
+    activeAgent,
+    activeAgentId,
+    switchAgent,
+    updatePrompt,
+    addCustomAgent: addCustom,
+    removeCustomAgent: removeCustom,
+    agentMessages,
+    addMessageToAgent,
+    clearAgentMessages,
+  };
+}
+```
+
+#### 2c. Rewrite `frontend/src/components/layout/Sidebar.tsx`
+
+Replace the hardcoded `AGENTS` array with data from `useAgent()`. Keep the existing styling 100% intact — all classes, transitions, and CSS variable tokens stay the same.
+
+Key changes:
+
+1. **Import `useAgent`** instead of the static `AGENTS` constant
+2. **Map over `agents` from the hook** instead of `AGENTS`
+3. **Agent status** — use the `STATUS_DOT` and `STATUS_LABEL` maps exactly as they are (supports `online`, `thinking`, `idle`, `offline`)
+4. **Active agent highlight** — compare `activeAgentId` instead of hardcoded `activeAgent` state
+5. **Agent icon** — use `agent.emoji` inside the avatar circle instead of `agent.initials` (or keep initials in the circle and show emoji elsewhere — your choice, just be consistent)
+6. **"+ New Agent" button** — opens a modal/inline form to create a custom agent (name, role, emoji, prompt). Use `addCustomAgent()`.
+7. **Edit prompt** — clicking an agent's `⋯` button or a small edit icon opens an inline textarea to edit the system prompt. Use `updatePrompt(agent.id, newPrompt)`.
+8. **Remove custom agent** — only for non-built-in agents, show a small ✕ that calls `removeCustomAgent(id)`.
+
+**Styling rules (CRITICAL):**
+- Use `rgb(var(--accent))`, `rgb(var(--text))`, `rgb(var(--panel))` for ALL colors
+- Use existing classes: `glass`, `glass-strong`, `glow-neon`, `hover-glow`, `btn`, `btn-accent`
+- Use `transition-colors duration-700` on elements that change with theme
+- The psychedelic theme targets `aside:first-of-type` — keep the `<aside>` as the root element
+- The form for new agent / edit prompt should use `glass-strong` panel styling
+- Do NOT introduce hardcoded hex colors except for status dots (amber/red/green) — same as existing pattern
+
+---
+
+### Phase 3: Chat Store — Per-Agent Isolation
+
+#### 3a. Update `frontend/src/store/chat.store.ts`
+
+Add a `syncToAgent` helper so messages get saved to the active agent's conversation in `agent.store.ts`:
+
+```ts
+// In useChat() hook (frontend/src/hooks/useChat.ts):
+// After addMessage() calls, also call:
+//   useAgentStore.getState().addMessageToAgent(activeAgentId, message)
+//
+// When switching agents, restore their messages:
+//   clearMessages();
+//   for (const msg of agentMessages) { addMessage(msg); }
+```
+
+The `useChat` hook should be updated to:
+1. Accept an optional `systemPrompt` override (the active agent's prompt)
+2. Sync messages to `agent.store` after each `addMessage`
+3. On agent switch, clear the chat store and replay the new agent's history
+
+#### 3b. Update LLM call to use agent prompt
+
+In `backend/src/routes/chat.route.ts`, the system prompt is built by `contextService.buildSystemPrompt()`. For the agent system to work, the frontend should send the active agent's `systemPrompt` as part of the request, or the backend should accept an `agentId` parameter and load the appropriate prompt.
+
+**Simplest approach:** Add an optional `agentSystemPrompt` field to the chat request schema:
+
+```ts
+// In shared/src/chat.types.ts or backend/src/utils/validate.ts
+export const ChatRequestSchema = z.object({
+  sessionId: z.string().uuid(),
+  messages: z.array(/* ... existing ... */),
+  imageBase64: z.string().optional(),
+  agentSystemPrompt: z.string().optional(),  // NEW
+});
+```
+
+Then in `chat.route.ts`, if `agentSystemPrompt` is provided, prepend it to the system prompt:
+
+```ts
+const systemPrompt = agentSystemPrompt
+  ? `${agentSystemPrompt}\n\n${await contextService.buildSystemPrompt(vaultSnippets)}`
+  : await contextService.buildSystemPrompt(vaultSnippets);
+```
+
+In the frontend `chat.api.ts`, add the `agentSystemPrompt` field to the payload.
+
+---
+
+### Phase 4: Verification Checklist
+
+After implementing, verify each of these:
+
+- [ ] `npm install` succeeds on Linux (no Windows-only bindings)
+- [ ] `npx tsc --noEmit` passes in both `frontend/` and `backend/`
+- [ ] Backend starts and `/health` returns 200
+- [ ] DeepSeek API key works — send a test message
+- [ ] Ollama fallback works — stop Ollama, send a message, see the fallback kick in
+- [ ] Vault status in RightPanel shows real note counts (requires Obsidian Local REST API plugin running on `127.0.0.1:27124`)
+- [ ] Sidebar shows 4 built-in agents (Chad, Kyle, Karen, Brody)
+- [ ] Clicking an agent switches the active agent — chat clears and loads that agent's history
+- [ ] "+ New Agent" creates a custom agent with user-defined name/role/prompt
+- [ ] Edit prompt saves and persists across page reloads (localStorage)
+- [ ] Remove custom agent works (built-in agents cannot be removed)
+- [ ] Theme toggle (Matrix ↔ Psychedelic) works correctly on all new UI elements
+- [ ] Sidebar psychedelic animation (`psych-layout-breathe`) still triggers on `aside:first-of-type`
+
+---
+
+### File Manifest (all files touched this session + next)
+
+| File | Status | Phase |
+|---|---|---|
+| `frontend/src/api/vault.api.ts` | ✅ Fixed URLs | — |
+| `frontend/src/hooks/useVault.ts` | ✅ Implemented | — |
+| `frontend/src/components/layout/RightPanel.tsx` | ✅ Wired to vault | — |
+| `frontend/src/components/layout/AppLayout.tsx` | ✅ Fixed theme prop | — |
+| `frontend/src/components/WindowManager.tsx` | ✅ Fixed theme prop | — |
+| `frontend/package.json` | ✅ Removed win32 binding | — |
+| `backend/src/config/index.ts` | 🔜 Add deepseek config | 1a |
+| `backend/src/services/deepseek.service.ts` | 🔜 NEW | 1b |
+| `backend/src/services/llm.service.ts` | 🔜 NEW | 1c |
+| `backend/src/routes/chat.route.ts` | 🔜 Switch to llmService | 1d |
+| `.env` | 🔜 Add DEEPSEEK_* vars | 1e |
+| `frontend/src/store/agent.store.ts` | 🔜 NEW | 2a |
+| `frontend/src/hooks/useAgent.ts` | 🔜 NEW | 2b |
+| `frontend/src/components/layout/Sidebar.tsx` | 🔜 Rewrite with agent store | 2c |
+| `frontend/src/store/chat.store.ts` | 🔜 Per-agent isolation | 3a |
+| `frontend/src/hooks/useChat.ts` | 🔜 Agent prompt + sync | 3a |
+| `frontend/src/api/chat.api.ts` | 🔜 Add agentSystemPrompt | 3b |
+| `backend/src/utils/validate.ts` | 🔜 Add agentSystemPrompt | 3b |
 =======
