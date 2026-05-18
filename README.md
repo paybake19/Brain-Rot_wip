@@ -230,20 +230,6 @@ It's the beginning of a **personal intelligence layer**.
 
 ## 📋 Next Session: Implementation Plan
 
-> Generated: 2026-05-12 | Session scope: DeepSeek API, Multi-Agent System, Sidebar Wiring
-
-### What was completed this session
-
-- ✅ Fixed `vault.api.ts` URLs (`/api/v1/vault` → `/api/vault`) to match backend routes
-- ✅ Implemented `frontend/src/hooks/useVault.ts` (was empty) — live vault data fetching
-- ✅ Wired `RightPanel.tsx` vault section to `useVault` hook — real note counts, connection status, sync button
-- ✅ Fixed TypeScript errors: `theme` prop threaded through `AppLayout` → `WindowManager` → `ChatWindow`
-- ✅ Removed Windows-only `@rolldown/binding-win32-x64-msvc` from `package.json` (re-add when back on Windows)
-- ✅ Designed agent pipeline (Chad → Kyle → Karen, orchestrated by Brody)
-- ✅ Designed LLM routing (DeepSeek primary → Ollama fallback)
-
----
-
 ### Phase 1: DeepSeek API Service + Ollama Fallback
 
 #### 1a. Add DeepSeek config to `backend/src/config/index.ts`

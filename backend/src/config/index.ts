@@ -9,13 +9,7 @@ const envPath = path.join(rootDir, ".env");
 
 const result = dotenv.config({ path: envPath });
 
-// --- TEMPORARY DEBUG ---
-console.log("=== BRAINROT CONFIG DEBUG ===");
-console.log("ENV FILE PATH:", envPath);
-console.log("DOTENV ERROR:", result.error ?? "none");
-console.log("BRAINROT_API_KEY:", process.env.BRAINROT_API_KEY ?? "NOT FOUND");
-console.log("=============================");
-// -----------------------
+
 function require_env(key: string): string {
   const val = process.env[key];
   if (!val) throw new Error(`Missing required environment variable: ${key}`);
@@ -26,6 +20,11 @@ export const config = {
   port: process.env.PORT || 3001,
   nodeEnv: process.env.NODE_ENV || "development",
   apiKey: require_env("BRAINROT_API_KEY"),
+  deepseek: {
+    apiKey: require_env("DEEPSEEK_API_KEY"),
+    model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
+    baseUrl: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
+  },
   corsOrigin: process.env.CORS_ORIGIN || "http://localhost:5173",
   ollama: {
     baseUrl: require_env("OLLAMA_BASE_URL"),
