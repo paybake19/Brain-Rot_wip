@@ -230,21 +230,6 @@ It's the beginning of a **personal intelligence layer**.
 
 ## 📋 Next Session: Implementation Plan
 
-### Phase 1: DeepSeek API Service + Ollama Fallback
-
-#### 1a. Add DeepSeek config to `backend/src/config/index.ts`
-
-Add to the `config` object inside `require_env` / env reads:
-
-```ts
-deepseek: {
-  apiKey: require_env("DEEPSEEK_API_KEY"),
-  model: process.env.DEEPSEEK_MODEL || "deepseek-chat",
-  baseUrl: process.env.DEEPSEEK_BASE_URL || "https://api.deepseek.com",
-},
-```
-
-Remove the hardcoded console.log debug block at the top of the file.
 
 #### 1b. Create `backend/src/services/deepseek.service.ts`
 
